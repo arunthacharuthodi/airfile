@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import '../models/file_payload.dart';
+import 'clipboard_sync_service.dart';
 import 'storage_service.dart';
 
 typedef OnIncomingTransferRequest = Future<bool> Function(FilePayload payload);
@@ -33,6 +34,7 @@ class TransferServer extends ChangeNotifier {
   final StorageService storageService;
   final String deviceId;
   String deviceName;
+  ClipboardSyncService? clipboardSyncService;
 
   HttpServer? _serverIpv4;
   HttpServer? _serverIpv6;
@@ -168,6 +170,10 @@ class TransferServer extends ChangeNotifier {
         await _handleTransferRequest(request);
       } else if (path == '/api/transfer/upload' && request.method == 'POST') {
         await _handleBinaryUpload(request);
+      } else if (path == '/api/clipboard' && request.method == 'POST') {
+        await _handleClipboardPost(request);
+      } else if (path == '/api/clipboard' && request.method == 'GET') {
+        _handleClipboardGet(request);
       } else if (path.startsWith('/api/transfer/download/')) {
         await _handleDownload(request);
       } else if (path == '/web/upload' && request.method == 'POST') {
@@ -220,6 +226,34 @@ class TransferServer extends ChangeNotifier {
 
     request.response.headers.contentType = ContentType.json;
     request.response.write(jsonEncode({'files': list}));
+    request.response.close();
+  }
+
+  Future<void> _handleClipboardPost(HttpRequest request) async {
+    try {
+      final body = await utf8.decoder.bind(request).join();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final success = await clipboardSyncService?.handleIncomingClipboard(json) ?? false;
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({'status': success ? 'ok' : 'ignored'}));
+    } catch (e) {
+      request.response.statusCode = HttpStatus.badRequest;
+      request.response.write(jsonEncode({'error': e.toString()}));
+    } finally {
+      await request.response.close();
+    }
+  }
+
+  void _handleClipboardGet(HttpRequest request) {
+    final response = {
+      'text': clipboardSyncService?.currentText ?? '',
+      'senderName': clipboardSyncService?.lastSenderDeviceName ?? '',
+      'timestamp': clipboardSyncService?.lastSyncTime?.toIso8601String() ?? '',
+    };
+    request.response.statusCode = HttpStatus.ok;
+    request.response.headers.contentType = ContentType.json;
+    request.response.write(jsonEncode(response));
     request.response.close();
   }
 
@@ -761,6 +795,82 @@ class TransferServer extends ChangeNotifier {
       text-align: center;
       color: var(--text-secondary);
     }
+    .clipboard-box {
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .clip-text {
+      font-size: 13px;
+      color: var(--text);
+      word-break: break-all;
+      max-height: 80px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .clip-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--card-border);
+    }
+    .clip-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .btn-sm {
+      background: transparent;
+      border: 1px solid var(--card-border-light);
+      color: var(--text);
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-sm:hover {
+      background: #242424;
+      border-color: #555555;
+    }
+    .clip-input-row {
+      display: flex;
+      gap: 6px;
+    }
+    .clip-input {
+      flex: 1;
+      background: var(--card-inner);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .clip-input:focus {
+      outline: none;
+      border-color: #555;
+    }
+    .btn-push {
+      background: #1F1F1F;
+      border: 1px solid var(--card-border-light);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+    }
+    .btn-push:hover {
+      background: #2D2D2D;
+    }
     #fileInput { display: none; }
   </style>
 </head>
@@ -805,6 +915,25 @@ class TransferServer extends ChangeNotifier {
       <div class="status-text" id="statusText"></div>
     </div>
 
+    <!-- Universal Clipboard Section -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div class="card-title" style="margin-bottom: 0;">📋 Universal Clipboard</div>
+        <span id="clipBadge" style="font-size: 10px; padding: 2px 6px; background: #1A1A1A; border: 1px solid #333; border-radius: 3px; color: #A3A3A3; letter-spacing: 0.5px;">LIVE SYNC</span>
+      </div>
+      <div class="clipboard-box">
+        <div id="clipContent" class="clip-text">Listening for clipboard text...</div>
+        <div class="clip-footer">
+          <span id="clipSender" class="clip-meta">Ready</span>
+          <button id="btnCopyClip" class="btn-sm" onclick="copySyncedClip()">Copy to Device</button>
+        </div>
+      </div>
+      <div class="clip-input-row">
+        <input type="text" id="clipInput" class="clip-input" placeholder="Type or paste text to push to all devices..." onkeydown="if(event.key==='Enter') pushClipText()" />
+        <button class="btn-push" onclick="pushClipText()">Push</button>
+      </div>
+    </div>
+
     <!-- Download from Mac Section -->
     <div class="card">
       <div class="card-title">📥 Available Downloads from Mac</div>
@@ -818,6 +947,63 @@ class TransferServer extends ChangeNotifier {
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
     const statusText = document.getElementById('statusText');
+
+    let currentClipboardText = '';
+
+    async function fetchClipboard() {
+      try {
+        const res = await fetch('/api/clipboard');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.text && data.text !== currentClipboardText) {
+            currentClipboardText = data.text;
+            document.getElementById('clipContent').textContent = data.text;
+            const sender = data.senderName ? 'From ' + data.senderName : 'Synced';
+            document.getElementById('clipSender').textContent = sender;
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function copySyncedClip() {
+      if (!currentClipboardText) return;
+      try {
+        await navigator.clipboard.writeText(currentClipboardText);
+        const btn = document.getElementById('btnCopyClip');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy to Device'; }, 2000);
+      } catch (e) {
+        alert('Could not copy automatically. Please select text manually.');
+      }
+    }
+
+    async function pushClipText() {
+      const input = document.getElementById('clipInput');
+      const val = input.value.trim();
+      if (!val) return;
+      try {
+        await fetch('/api/clipboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            senderId: 'web-client-' + Math.random().toString(36).substring(2, 7),
+            senderName: 'Web Client',
+            timestamp: new Date().toISOString(),
+            hash: 'web_' + Date.now(),
+            text: val
+          })
+        });
+        input.value = '';
+        currentClipboardText = val;
+        document.getElementById('clipContent').textContent = val;
+        document.getElementById('clipSender').textContent = 'Pushed by You';
+      } catch (e) {
+        alert('Failed to push text to devices');
+      }
+    }
+
+    setInterval(fetchClipboard, 2000);
+    fetchClipboard();
 
     ['dragenter', 'dragover'].forEach(name => {
       dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });

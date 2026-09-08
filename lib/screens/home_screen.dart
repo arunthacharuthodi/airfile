@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/file_payload.dart';
 import '../models/peer_device.dart';
+import '../services/clipboard_sync_service.dart';
 import '../services/discovery_service.dart';
 import '../services/network_info_service.dart';
 import '../services/storage_service.dart';
 import '../services/transfer_client.dart';
 import '../services/transfer_server.dart';
 import '../theme/app_theme.dart';
+import '../widgets/clipboard_sync_card.dart';
 import '../widgets/drag_drop_staging_zone.dart';
 import '../widgets/peer_card.dart';
 import '../widgets/qr_hotspot_modal.dart';
@@ -36,12 +38,22 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final TextEditingController _directIpController = TextEditingController();
+  late final ClipboardSyncService _clipboardSyncService;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _clipboardSyncService = ClipboardSyncService(
+      discoveryService: widget.discoveryService,
+      localDeviceId: '${widget.networkInfoService.deviceName}_${widget.transferServer.deviceId}',
+      localDeviceName: widget.networkInfoService.deviceName,
+      localPort: widget.transferServer.port,
+    );
+    widget.transferServer.clipboardSyncService = _clipboardSyncService;
     widget.transferServer.onTransferProgress = (_) {
       if (mounted) setState(() {});
     };
@@ -68,7 +80,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _clipboardSyncService.checkLocalClipboard();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clipboardSyncService.dispose();
     _directIpController.dispose();
     super.dispose();
   }
@@ -352,6 +373,12 @@ class _HomeScreenState extends State<HomeScreen> {
           onFileAdded: widget.transferServer.stageFile,
           onFileRemoved: widget.transferServer.removeStagedFile,
           onClearAll: widget.transferServer.clearStagedFiles,
+        ),
+        const SizedBox(height: 14),
+
+        // Universal Clipboard Card
+        ClipboardSyncCard(
+          clipboardSyncService: _clipboardSyncService,
         ),
         const SizedBox(height: 18),
 
@@ -652,7 +679,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? 'MAC'
                             : (Platform.isWindows
                                 ? 'WINDOWS'
-                                : (Platform.isAndroid ? 'ANDROID' : 'PEER')),
+                                : (Platform.isIOS
+                                    ? 'IOS'
+                                    : (Platform.isAndroid ? 'ANDROID' : 'PEER'))),
                           style: GoogleFonts.alumniSans(
                             fontSize: 10,
                             fontWeight: FontWeight.w400,
