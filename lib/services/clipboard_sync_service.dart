@@ -5,12 +5,14 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'discovery_service.dart';
+import 'pairing_service.dart';
 
 class ClipboardSyncService extends ChangeNotifier {
   final DiscoveryService discoveryService;
   final String localDeviceId;
   final String localDeviceName;
   final int localPort;
+  PairingService? pairingService;
 
   bool _autoSyncEnabled = true;
   String? _currentText;
@@ -32,6 +34,7 @@ class ClipboardSyncService extends ChangeNotifier {
     required this.localDeviceId,
     required this.localDeviceName,
     required this.localPort,
+    this.pairingService,
   }) {
     _startMonitoring();
   }
@@ -90,10 +93,15 @@ class ClipboardSyncService extends ChangeNotifier {
     }
   }
 
-  /// Broadcasts clipboard text to all active discovered peers.
+  /// Broadcasts clipboard text to all active paired peers.
   Future<void> broadcastToPeers(String text, [String? textHash]) async {
     final hash = textHash ?? _hashText(text);
-    final peers = discoveryService.peers.where((p) => p.isOnline).toList();
+    // Only broadcast to online peers that are paired
+    final peers = discoveryService.peers.where((p) {
+      if (!p.isOnline) return false;
+      if (pairingService != null && !pairingService!.isPaired(p.id)) return false;
+      return true;
+    }).toList();
     if (peers.isEmpty) return;
 
     _isBroadcasting = true;
@@ -116,6 +124,10 @@ class ClipboardSyncService extends ChangeNotifier {
         final request = await client.postUrl(uri);
         request.headers.contentType = ContentType.json;
         request.headers.set('X-Device-Id', localDeviceId);
+        final token = pairingService?.getAuthToken(peer.id);
+        if (token != null && token.isNotEmpty) {
+          request.headers.set('X-Auth-Token', token);
+        }
         request.write(payload);
         final response = await request.close().timeout(const Duration(milliseconds: 2000));
         await response.drain();

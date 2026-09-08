@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:airfile_mac/models/file_payload.dart';
 import 'package:airfile_mac/models/peer_device.dart';
 import 'package:airfile_mac/services/network_info_service.dart';
+import 'package:airfile_mac/services/pairing_service.dart';
 
 void main() {
   test('PeerDevice model serialization', () {
@@ -44,5 +45,40 @@ void main() {
     final profile = NetworkProfile.loopback;
     expect(profile.ip, '127.0.0.1');
     expect(profile.isHotspot, false);
+  });
+
+  test('PairedDevice serialization and deserialization', () {
+    final now = DateTime.now();
+    final paired = PairedDevice(
+      id: 'mac_001',
+      name: 'MacBook Pro',
+      token: 'secret_token_123',
+      pairedAt: now,
+    );
+
+    final json = paired.toJson();
+    final restored = PairedDevice.fromJson(json);
+
+    expect(restored.id, 'mac_001');
+    expect(restored.name, 'MacBook Pro');
+    expect(restored.token, 'secret_token_123');
+  });
+
+  test('IncomingPairRequest accept and decline flow', () async {
+    final request = IncomingPairRequest(
+      initiatorId: 'dev_123',
+      initiatorName: 'iPad Pro',
+      initiatorIp: '192.168.1.20',
+      initiatorPort: 53317,
+      code: '849201',
+      secret: 'token_abc',
+    );
+
+    expect(request.code, '849201');
+    expect(request.secret, 'token_abc');
+
+    request.respond(true);
+    final accepted = await request.response;
+    expect(accepted, isTrue);
   });
 }

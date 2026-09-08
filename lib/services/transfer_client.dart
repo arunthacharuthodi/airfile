@@ -24,6 +24,7 @@ class TransferClient extends ChangeNotifier {
   Future<bool> sendFile({
     required PeerDevice peer,
     required String filePath,
+    String? authToken,
     void Function(FilePayload payload)? onProgress,
     void Function(FilePayload payload)? onComplete,
     void Function(FilePayload payload, String error)? onError,
@@ -99,6 +100,9 @@ class TransferClient extends ChangeNotifier {
 
       request.headers.set('X-Device-Name', senderDeviceName);
       request.headers.set('X-Device-Id', senderDeviceId);
+      if (authToken != null && authToken.isNotEmpty) {
+        request.headers.set('X-Auth-Token', authToken);
+      }
       request.headers.set('X-File-Name', Uri.encodeComponent(fileName));
       request.headers.set('X-File-Size', stat.size.toString());
       request.headers.set('Content-Type', mime);

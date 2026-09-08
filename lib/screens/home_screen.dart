@@ -6,12 +6,14 @@ import '../models/peer_device.dart';
 import '../services/clipboard_sync_service.dart';
 import '../services/discovery_service.dart';
 import '../services/network_info_service.dart';
+import '../services/pairing_service.dart';
 import '../services/storage_service.dart';
 import '../services/transfer_client.dart';
 import '../services/transfer_server.dart';
 import '../theme/app_theme.dart';
 import '../widgets/clipboard_sync_card.dart';
 import '../widgets/drag_drop_staging_zone.dart';
+import '../widgets/pairing_dialog.dart';
 import '../widgets/peer_card.dart';
 import '../widgets/qr_hotspot_modal.dart';
 import '../widgets/radar_visualizer.dart';
@@ -41,19 +43,30 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final TextEditingController _directIpController = TextEditingController();
   late final ClipboardSyncService _clipboardSyncService;
+  late final PairingService _pairingService;
+  bool _isShowingIncomingPairDialog = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    _pairingService = PairingService(
+      storageService: widget.storageService,
+      localDeviceId: '${widget.networkInfoService.deviceName}_${widget.transferServer.deviceId}',
+      localDeviceName: widget.networkInfoService.deviceName,
+    );
+    _pairingService.addListener(_onPairingServiceChanged);
+
     _clipboardSyncService = ClipboardSyncService(
       discoveryService: widget.discoveryService,
       localDeviceId: '${widget.networkInfoService.deviceName}_${widget.transferServer.deviceId}',
       localDeviceName: widget.networkInfoService.deviceName,
       localPort: widget.transferServer.port,
+      pairingService: _pairingService,
     );
     widget.transferServer.clipboardSyncService = _clipboardSyncService;
+    widget.transferServer.pairingService = _pairingService;
     widget.transferServer.onTransferProgress = (_) {
       if (mounted) setState(() {});
     };
@@ -89,9 +102,65 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pairingService.removeListener(_onPairingServiceChanged);
+    _pairingService.dispose();
     _clipboardSyncService.dispose();
     _directIpController.dispose();
     super.dispose();
+  }
+
+  void _onPairingServiceChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+    if (_pairingService.hasIncomingRequest && !_isShowingIncomingPairDialog && mounted) {
+      final request = _pairingService.currentIncomingRequest;
+      if (request != null) {
+        _isShowingIncomingPairDialog = true;
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => IncomingPairingDialog(
+            request: request,
+            onAccepted: () {
+              _pairingService.respondToCurrentRequest(true);
+              Navigator.of(ctx).pop();
+              _isShowingIncomingPairDialog = false;
+            },
+            onDeclined: () {
+              _pairingService.respondToCurrentRequest(false);
+              Navigator.of(ctx).pop();
+              _isShowingIncomingPairDialog = false;
+            },
+          ),
+        ).then((_) {
+          _isShowingIncomingPairDialog = false;
+        });
+      }
+    }
+  }
+
+  void _handlePairPeer(PeerDevice peer) {
+    if (!peer.hasDirectIp) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Cannot pair: peer does not have a direct IP connection yet.',
+            style: GoogleFonts.alumniSans(fontSize: 13),
+          ),
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PairingInitiatorModal(
+        targetPeer: peer,
+        pairingService: _pairingService,
+      ),
+    );
   }
 
   void _showQrModal() {
@@ -191,6 +260,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
+    if (!_pairingService.isPaired(peer.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Device "${peer.name}" is not paired. Please pair and verify code first.',
+            style: GoogleFonts.alumniSans(fontSize: 13),
+          ),
+          action: SnackBarAction(
+            label: 'Pair & Connect',
+            textColor: AppTheme.accentWhite,
+            onPressed: () => _handlePairPeer(peer),
+          ),
+        ),
+      );
+      return;
+    }
+
     if (!peer.hasDirectIp) {
       showDialog(
         context: context,
@@ -213,11 +299,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _sendDirectFilesToPeer(PeerDevice peer) async {
+    final authToken = _pairingService.getAuthToken(peer.id);
     final staged = widget.transferServer.stagedFiles;
     for (final file in staged) {
       await widget.transferClient.sendFile(
         peer: peer,
         filePath: file.path,
+        authToken: authToken,
         onComplete: (payload) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -254,6 +342,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         widget.discoveryService,
         widget.transferServer,
         widget.transferClient,
+        _pairingService,
       ]),
       builder: (context, child) {
         final profile = widget.networkInfoService.currentProfile;
@@ -448,6 +537,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               return PeerCard(
                 peer: peer,
                 stagedCount: stagedFiles.length,
+                isPaired: _pairingService.isPaired(peer.id),
+                onPairPressed: () => _handlePairPeer(peer),
+                onUnpairPressed: () => _pairingService.unpairDevice(peer.id, peer),
                 onSendPressed: () => _sendStagedFilesToPeer(peer),
               );
             },

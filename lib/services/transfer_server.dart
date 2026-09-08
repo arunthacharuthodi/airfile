@@ -6,6 +6,7 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 import '../models/file_payload.dart';
 import 'clipboard_sync_service.dart';
+import 'pairing_service.dart';
 import 'storage_service.dart';
 
 typedef OnIncomingTransferRequest = Future<bool> Function(FilePayload payload);
@@ -35,6 +36,7 @@ class TransferServer extends ChangeNotifier {
   final String deviceId;
   String deviceName;
   ClipboardSyncService? clipboardSyncService;
+  PairingService? pairingService;
 
   HttpServer? _serverIpv4;
   HttpServer? _serverIpv6;
@@ -151,7 +153,7 @@ class TransferServer extends ChangeNotifier {
     // Add CORS headers for web requests
     request.response.headers.add('Access-Control-Allow-Origin', '*');
     request.response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    request.response.headers.add('Access-Control-Allow-Headers', 'Origin, Content-Type, Content-Length, X-Device-Name, X-File-Name, X-File-Size');
+    request.response.headers.add('Access-Control-Allow-Headers', 'Origin, Content-Type, Content-Length, X-Device-Id, X-Device-Name, X-File-Name, X-File-Size, X-Auth-Token');
 
     if (request.method == 'OPTIONS') {
       request.response.statusCode = HttpStatus.ok;
@@ -164,6 +166,10 @@ class TransferServer extends ChangeNotifier {
     try {
       if (path == '/api/ping') {
         _handlePing(request);
+      } else if (path == '/api/pair/request' && request.method == 'POST') {
+        await _handlePairRequest(request);
+      } else if (path == '/api/pair/unpair' && request.method == 'POST') {
+        await _handlePairUnpair(request);
       } else if (path == '/api/staged') {
         _handleGetStagedFiles(request);
       } else if (path == '/api/transfer/request' && request.method == 'POST') {
@@ -229,7 +235,73 @@ class TransferServer extends ChangeNotifier {
     request.response.close();
   }
 
+  Future<void> _handlePairRequest(HttpRequest request) async {
+    try {
+      final body = await utf8.decoder.bind(request).join();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final initiatorId = json['initiatorId'] as String;
+      final initiatorName = json['initiatorName'] as String? ?? 'Device';
+      final code = json['code'] as String;
+      final token = json['token'] as String;
+      final remoteIp = request.connectionInfo?.remoteAddress.address ?? '';
+      final remotePort = request.connectionInfo?.remotePort ?? 0;
+
+      if (pairingService == null) {
+        request.response.statusCode = HttpStatus.serviceUnavailable;
+        request.response.write(jsonEncode({'accepted': false, 'error': 'Pairing service not initialized'}));
+        await request.response.close();
+        return;
+      }
+
+      final result = await pairingService!.handleIncomingRequest(
+        initiatorId: initiatorId,
+        initiatorName: initiatorName,
+        initiatorIp: remoteIp,
+        initiatorPort: remotePort,
+        code: code,
+        token: token,
+      );
+
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({'accepted': result.accepted, 'token': result.token}));
+    } catch (e) {
+      request.response.statusCode = HttpStatus.badRequest;
+      request.response.write(jsonEncode({'accepted': false, 'error': e.toString()}));
+    } finally {
+      await request.response.close();
+    }
+  }
+
+  Future<void> _handlePairUnpair(HttpRequest request) async {
+    try {
+      final body = await utf8.decoder.bind(request).join();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final deviceId = json['deviceId'] as String?;
+      if (deviceId != null) {
+        pairingService?.handlePeerUnpairNotification(deviceId);
+      }
+      request.response.statusCode = HttpStatus.ok;
+      request.response.write(jsonEncode({'status': 'ok'}));
+    } catch (e) {
+      request.response.statusCode = HttpStatus.badRequest;
+      request.response.write(jsonEncode({'error': e.toString()}));
+    } finally {
+      await request.response.close();
+    }
+  }
+
   Future<void> _handleClipboardPost(HttpRequest request) async {
+    final senderId = request.headers.value('X-Device-Id');
+    final token = request.headers.value('X-Auth-Token');
+    if (pairingService != null && senderId != null && !pairingService!.verifyToken(senderId, token)) {
+      request.response.statusCode = HttpStatus.unauthorized;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({'error': 'Device not paired. Please pair first.'}));
+      await request.response.close();
+      return;
+    }
+
     try {
       final body = await utf8.decoder.bind(request).join();
       final json = jsonDecode(body) as Map<String, dynamic>;
@@ -258,6 +330,15 @@ class TransferServer extends ChangeNotifier {
   }
 
   Future<void> _handleTransferRequest(HttpRequest request) async {
+    final senderId = request.headers.value('X-Device-Id');
+    final token = request.headers.value('X-Auth-Token');
+    if (pairingService != null && (senderId == null || !pairingService!.verifyToken(senderId, token))) {
+      request.response.statusCode = HttpStatus.unauthorized;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({'accepted': false, 'reason': 'Device not paired. Please pair first.'}));
+      await request.response.close();
+      return;
+    }
     final body = await utf8.decoder.bind(request).join();
     final json = jsonDecode(body) as Map<String, dynamic>;
 
@@ -288,6 +369,16 @@ class TransferServer extends ChangeNotifier {
   }
 
   Future<void> _handleBinaryUpload(HttpRequest request) async {
+    final senderId = request.headers.value('X-Device-Id');
+    final token = request.headers.value('X-Auth-Token');
+    if (pairingService != null && (senderId == null || !pairingService!.verifyToken(senderId, token))) {
+      request.response.statusCode = HttpStatus.unauthorized;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({'error': 'Device not paired. Please pair first.'}));
+      await request.response.close();
+      return;
+    }
+
     final rawFileName = request.headers.value('X-File-Name');
     final fileName = rawFileName != null ? Uri.decodeComponent(rawFileName) : 'received_${DateTime.now().millisecondsSinceEpoch}.bin';
     final totalSize = int.tryParse(request.headers.value('X-File-Size') ?? '') ?? request.contentLength;

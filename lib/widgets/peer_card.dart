@@ -6,13 +6,19 @@ import '../theme/app_theme.dart';
 class PeerCard extends StatelessWidget {
   final PeerDevice peer;
   final int stagedCount;
+  final bool isPaired;
   final VoidCallback onSendPressed;
+  final VoidCallback? onPairPressed;
+  final VoidCallback? onUnpairPressed;
 
   const PeerCard({
     super.key,
     required this.peer,
     required this.stagedCount,
     required this.onSendPressed,
+    this.isPaired = false,
+    this.onPairPressed,
+    this.onUnpairPressed,
   });
 
   @override
@@ -29,11 +35,14 @@ class PeerCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppTheme.bgSecondary,
               shape: BoxShape.circle,
-              border: Border.all(color: AppTheme.cardBorderHover, width: 1),
+              border: Border.all(
+                color: isPaired ? AppTheme.accentWhite.withValues(alpha: 0.3) : AppTheme.cardBorderHover,
+                width: 1,
+              ),
             ),
             child: Icon(
               peer.deviceType.icon,
-              color: AppTheme.textPrimary,
+              color: isPaired ? AppTheme.accentWhite : AppTheme.textMuted,
               size: 16,
             ),
           ),
@@ -61,6 +70,8 @@ class PeerCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
+                    _buildPairStatusBadge(isPaired),
+                    const SizedBox(width: 6),
                     _buildMediumBadge(peer.medium),
                   ],
                 ),
@@ -104,34 +115,107 @@ class PeerCard extends StatelessWidget {
           ),
 
           // Action Button
-          OutlinedButton.icon(
-            onPressed: stagedCount > 0 ? onSendPressed : null,
-            icon: Icon(
-              peer.hasDirectIp ? Icons.arrow_outward_rounded : Icons.qr_code_2_rounded,
-              size: 14,
-            ),
-            label: Text(
-              peer.hasDirectIp
-                  ? (stagedCount > 0 ? 'Send ($stagedCount)' : 'Select Files')
-                  : (stagedCount > 0 ? 'Share ($stagedCount)' : 'Share via QR'),
-              style: GoogleFonts.alumniSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                letterSpacing: 0.4,
+          if (!isPaired) ...[
+            OutlinedButton.icon(
+              onPressed: onPairPressed,
+              icon: const Icon(Icons.link_rounded, size: 14),
+              label: Text(
+                'Pair & Connect',
+                style: GoogleFonts.alumniSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.accentWhite,
+                side: const BorderSide(color: AppTheme.cardBorderHover, width: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
             ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.textPrimary,
-              disabledForegroundColor: AppTheme.textMuted,
-              side: BorderSide(
-                color: stagedCount > 0 ? AppTheme.accentWhite : AppTheme.cardBorder,
-                width: 1,
-              ),
-              backgroundColor: stagedCount > 0 ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
+          ] else ...[
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: stagedCount > 0 ? onSendPressed : null,
+                  icon: Icon(
+                    peer.hasDirectIp ? Icons.arrow_outward_rounded : Icons.qr_code_2_rounded,
+                    size: 14,
+                  ),
+                  label: Text(
+                    peer.hasDirectIp
+                        ? (stagedCount > 0 ? 'Send ($stagedCount)' : 'Select Files')
+                        : (stagedCount > 0 ? 'Share ($stagedCount)' : 'Share via QR'),
+                    style: GoogleFonts.alumniSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textPrimary,
+                    disabledForegroundColor: AppTheme.textMuted,
+                    side: BorderSide(
+                      color: stagedCount > 0 ? AppTheme.accentWhite : AppTheme.cardBorder,
+                      width: 1,
+                    ),
+                    backgroundColor: stagedCount > 0 ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+                if (onUnpairPressed != null) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.link_off_rounded, size: 14, color: AppTheme.textMuted),
+                    tooltip: 'Unpair Device',
+                    onPressed: onUnpairPressed,
+                    splashRadius: 14,
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPairStatusBadge(bool paired) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: paired ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: paired ? AppTheme.accentWhite.withValues(alpha: 0.6) : AppTheme.cardBorder,
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            paired ? Icons.verified_user_outlined : Icons.lock_outline_rounded,
+            size: 9,
+            color: paired ? AppTheme.accentWhite : AppTheme.textMuted,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            paired ? 'PAIRED' : 'UNPAIRED',
+            style: GoogleFonts.alumniSans(
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              color: paired ? AppTheme.accentWhite : AppTheme.textMuted,
+              letterSpacing: 0.6,
             ),
           ),
         ],
