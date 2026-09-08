@@ -58,3 +58,5 @@ migrate_working_dir/
 # Built release packages
 *.apk
 *.zip
+*.dmg
+*.pkg
