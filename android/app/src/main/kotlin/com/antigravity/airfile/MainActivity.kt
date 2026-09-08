@@ -1,4 +1,4 @@
-package com.example.airfile_mac
+package com.antigravity.airfile
 
 import io.flutter.embedding.android.FlutterActivity
 

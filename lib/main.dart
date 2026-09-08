@@ -13,13 +13,22 @@ void main() async {
 
   // 1. Initialize Storage
   final storageService = StorageService();
-  await storageService.init();
+  try {
+    await storageService.init();
+  } catch (e) {
+    debugPrint('StorageService init error: $e');
+  }
 
   // 2. Initialize Network Profiler
   final networkInfoService = NetworkInfoService();
-  await networkInfoService.refreshNetwork();
+  try {
+    await networkInfoService.refreshNetwork();
+  } catch (e) {
+    debugPrint('NetworkInfoService init error: $e');
+  }
 
-  final deviceId = 'mac_${Platform.localHostname}_${DateTime.now().millisecondsSinceEpoch % 10000}';
+  final platformPrefix = Platform.operatingSystem;
+  final deviceId = '${platformPrefix}_${Platform.localHostname}_${DateTime.now().millisecondsSinceEpoch % 10000}';
 
   // 3. Initialize Transfer Server
   final transferServer = TransferServer(
@@ -27,7 +36,11 @@ void main() async {
     deviceId: deviceId,
     deviceName: networkInfoService.deviceName,
   );
-  await transferServer.start();
+  try {
+    await transferServer.start();
+  } catch (e) {
+    debugPrint('TransferServer start error: $e');
+  }
 
   // 4. Initialize Transfer Client
   final transferClient = TransferClient(

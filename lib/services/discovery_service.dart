@@ -171,12 +171,21 @@ class DiscoveryService extends ChangeNotifier {
 
   Future<void> _startUdpListener() async {
     try {
-      _udpSocket = await RawDatagramSocket.bind(
-        InternetAddress.anyIPv4,
-        broadcastPort,
-        reuseAddress: true,
-        reusePort: true,
-      );
+      try {
+        _udpSocket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv4,
+          broadcastPort,
+          reuseAddress: true,
+          reusePort: !Platform.isAndroid,
+        );
+      } catch (_) {
+        _udpSocket = await RawDatagramSocket.bind(
+          InternetAddress.anyIPv4,
+          broadcastPort,
+          reuseAddress: true,
+          reusePort: false,
+        );
+      }
       _udpSocket!.broadcastEnabled = true;
 
       try {

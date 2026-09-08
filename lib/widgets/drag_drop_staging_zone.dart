@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -51,22 +52,13 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
 
   @override
   Widget build(BuildContext context) {
-    return DropTarget(
-      onDragEntered: (details) => setState(() => _isDraggingOver = true),
-      onDragExited: (details) => setState(() => _isDraggingOver = false),
-      onDragDone: (details) {
-        setState(() => _isDraggingOver = false);
-        for (final file in details.files) {
-          widget.onFileAdded(file.path);
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(14),
-        decoration: AppTheme.glassCardDecoration(isHighlighted: _isDraggingOver),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    final container = AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.glassCardDecoration(isHighlighted: _isDraggingOver),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             // Title & Action Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -241,7 +233,22 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
               ),
           ],
         ),
-      ),
+      );
+
+    if (Platform.isAndroid || Platform.isIOS) {
+      return container;
+    }
+
+    return DropTarget(
+      onDragEntered: (details) => setState(() => _isDraggingOver = true),
+      onDragExited: (details) => setState(() => _isDraggingOver = false),
+      onDragDone: (details) {
+        setState(() => _isDraggingOver = false);
+        for (final file in details.files) {
+          widget.onFileAdded(file.path);
+        }
+      },
+      child: container,
     );
   }
 }

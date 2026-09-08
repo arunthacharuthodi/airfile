@@ -11,7 +11,15 @@ class StorageService {
 
   Future<void> init() async {
     try {
-      final base = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+      Directory base;
+      if (Platform.isAndroid) {
+        base = (await getExternalStorageDirectory()) ?? await getApplicationDocumentsDirectory();
+      } else if (Platform.isIOS) {
+        base = await getApplicationDocumentsDirectory();
+      } else {
+        base = (await getDownloadsDirectory()) ?? await getApplicationDocumentsDirectory();
+      }
+
       final airFileDir = Directory(p.join(base.path, 'AirFile'));
       if (!await airFileDir.exists()) {
         await airFileDir.create(recursive: true);
@@ -19,11 +27,16 @@ class StorageService {
       _downloadDir = airFileDir;
     } catch (e) {
       debugPrint('Error initializing storage directory: $e');
-      final fallback = Directory(p.join(Platform.environment['HOME'] ?? '/tmp', 'Downloads', 'AirFile'));
-      if (!await fallback.exists()) {
-        await fallback.create(recursive: true);
+      try {
+        final fallbackBase = await getApplicationDocumentsDirectory();
+        final fallbackDir = Directory(p.join(fallbackBase.path, 'AirFile'));
+        if (!await fallbackDir.exists()) {
+          await fallbackDir.create(recursive: true);
+        }
+        _downloadDir = fallbackDir;
+      } catch (e2) {
+        debugPrint('Fallback storage initialization failed: $e2');
       }
-      _downloadDir = fallback;
     }
   }
 
