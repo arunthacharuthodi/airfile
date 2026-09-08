@@ -1,0 +1,224 @@
+name: Multi-Platform Release CI/CD (Windows, macOS, Android)
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ===================================================================
+  # 1. WINDOWS SETUP WIZARD (AirFile-Setup-x64.exe)
+  # ===================================================================
+  build-windows:
+    name: Windows (Setup Wizard)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows Desktop Support
+        run: flutter config --enable-windows-desktop
+
+      - name: Install Inno Setup Compiler
+        run: choco install innosetup --no-progress -y
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Windows Release Application
+        run: flutter build windows --release
+
+      - name: Compile Inno Setup Installer (AirFile-Setup-x64.exe)
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            $iscc = (Get-Command iscc).Source
+          }
+          & $iscc "windows\installer\inno_setup.iss"
+
+      - name: Verify Windows Installer
+        shell: pwsh
+        run: |
+          $path = "build\windows\installer\AirFile-Setup-x64.exe"
+          if (Test-Path $path) {
+            $mb = [math]::Round(((Get-Item $path).Length / 1MB), 2)
+            Write-Host "AirFile-Setup-x64.exe ready! ($mb MB)" -ForegroundColor Green
+          } else {
+            Write-Error "Installer binary was not found."
+            exit 1
+          }
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirFile-Windows-Setup
+          path: build/windows/installer/AirFile-Setup-x64.exe
+          retention-days: 90
+
+  # ===================================================================
+  # 2. MACOS (DMG, PKG, and Standalone ZIP)
+  # ===================================================================
+  build-macos:
+    name: macOS (DMG, PKG, ZIP)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable macOS Desktop Support
+        run: flutter config --enable-macos-desktop
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build macOS Release Application
+        run: flutter build macos --release
+
+      - name: Package AirFile.dmg and AirFile.pkg
+        run: |
+          chmod +x scripts/package_macos_dmg.sh scripts/package_macos_pkg.sh
+          ./scripts/package_macos_dmg.sh
+          ./scripts/package_macos_pkg.sh
+          zip -r -q AirFile-macOS-Release.zip build/macos/Build/Products/Release/AirFile.app
+
+      - name: Verify macOS Artifacts
+        run: |
+          ls -lh AirFile.dmg AirFile.pkg AirFile-macOS-Release.zip
+
+      - name: Upload macOS DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirFile-macOS-DMG
+          path: AirFile.dmg
+          retention-days: 90
+
+      - name: Upload macOS PKG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirFile-macOS-PKG
+          path: AirFile.pkg
+          retention-days: 90
+
+      - name: Upload macOS ZIP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirFile-macOS-ZIP
+          path: AirFile-macOS-Release.zip
+          retention-days: 90
+
+  # ===================================================================
+  # 3. ANDROID (AirFile-Android.apk)
+  # ===================================================================
+  build-android:
+    name: Android (Release APK)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      - name: Prepare Artifact
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk AirFile-Android.apk
+          ls -lh AirFile-Android.apk
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AirFile-Android-APK
+          path: AirFile-Android.apk
+          retention-days: 90
+
+  # ===================================================================
+  # 4. PUBLISH GITHUB RELEASE (On Tag: v*)
+  # ===================================================================
+  release:
+    name: Create GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ build-windows, build-macos, build-android ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AirFile-Windows-Setup
+          path: release_assets/
+
+      - name: Download macOS DMG Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AirFile-macOS-DMG
+          path: release_assets/
+
+      - name: Download macOS PKG Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AirFile-macOS-PKG
+          path: release_assets/
+
+      - name: Download macOS ZIP Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AirFile-macOS-ZIP
+          path: release_assets/
+
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AirFile-Android-APK
+          path: release_assets/
+
+      - name: Publish All Assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release_assets/AirFile-Setup-x64.exe
+            release_assets/AirFile.dmg
+            release_assets/AirFile.pkg
+            release_assets/AirFile-macOS-Release.zip
+            release_assets/AirFile-Android.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

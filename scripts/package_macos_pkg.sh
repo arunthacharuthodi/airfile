@@ -20,7 +20,11 @@ if [ ! -d "${APP_PATH}" ]; then
         APP_PATH="${ROOT_DIR}/build/macos/Build/Products/Release/airfile_mac.app"
     else
         echo "Building release app first..."
-        fvm flutter build macos --release
+        FLUTTER_CMD="flutter"
+        if command -v fvm >/dev/null 2>&1; then
+            FLUTTER_CMD="fvm flutter"
+        fi
+        $FLUTTER_CMD build macos --release
     fi
 fi
 
