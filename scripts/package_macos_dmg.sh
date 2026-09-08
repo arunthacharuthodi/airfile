@@ -15,8 +15,12 @@ APP_PATH="${ROOT_DIR}/build/macos/Build/Products/Release/AirFile.app"
 DMG_OUTPUT="${ROOT_DIR}/AirFile.dmg"
 STAGING_DIR="${ROOT_DIR}/build/macos/dmg_staging"
 
-echo "=== [1/4] Building macOS Release Application ==="
-fvm flutter build macos --release
+if [ ! -d "${APP_PATH}" ]; then
+    echo "=== [1/4] Building macOS Release Application ==="
+    fvm flutter build macos --release
+else
+    echo "=== [1/4] Found existing Release Application ==="
+fi
 
 if [ ! -d "${APP_PATH}" ]; then
     # Fallback check if build produced airfile_mac.app
@@ -80,6 +84,8 @@ if [ -n "${MOUNT_OUTPUT}" ]; then
     
     sync || true
     hdiutil detach "${MOUNT_POINT}" -force || true
+    sync
+    sleep 2
 fi
 
 echo "=== [4/4] Compressing Final Production DMG ==="

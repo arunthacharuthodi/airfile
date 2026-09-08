@@ -60,3 +60,4 @@ migrate_working_dir/
 *.zip
 *.dmg
 *.pkg
+/release_packages/

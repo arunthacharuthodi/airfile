@@ -27,11 +27,18 @@ fi
 echo "=== Building Apple Installer Package (.pkg) ==="
 rm -f "${PKG_OUTPUT}"
 
+PKG_STAGING="${ROOT_DIR}/build/macos/pkg_staging"
+rm -rf "${PKG_STAGING}"
+mkdir -p "${PKG_STAGING}"
+cp -R "${APP_PATH}" "${PKG_STAGING}/AirFile.app"
+
 productbuild \
-    --component "${APP_PATH}" /Applications \
+    --component "${PKG_STAGING}/AirFile.app" /Applications \
     --identifier "com.antigravity.airfile" \
     --version "1.0.0" \
     "${PKG_OUTPUT}"
+
+rm -rf "${PKG_STAGING}"
 
 echo "======================================================="
 echo "✅ Successfully generated: ${PKG_OUTPUT} ($(du -h "${PKG_OUTPUT}" | awk '{print $1}'))"
