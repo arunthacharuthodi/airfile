@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'services/dev_debug_service.dart';
 import 'services/discovery_service.dart';
 import 'services/network_info_service.dart';
 import 'services/storage_service.dart';
@@ -55,6 +56,9 @@ void main() async {
     localPort: transferServer.port,
   );
 
+  // 6. Initialize Dev Debug Service
+  final devDebugService = DevDebugService();
+
   runApp(
     AirFileApp(
       storageService: storageService,
@@ -62,6 +66,7 @@ void main() async {
       transferServer: transferServer,
       transferClient: transferClient,
       discoveryService: discoveryService,
+      devDebugService: devDebugService,
     ),
   );
 }
@@ -72,6 +77,7 @@ class AirFileApp extends StatelessWidget {
   final TransferServer transferServer;
   final TransferClient transferClient;
   final DiscoveryService discoveryService;
+  final DevDebugService devDebugService;
 
   const AirFileApp({
     super.key,
@@ -80,6 +86,7 @@ class AirFileApp extends StatelessWidget {
     required this.transferServer,
     required this.transferClient,
     required this.discoveryService,
+    required this.devDebugService,
   });
 
   @override
@@ -94,6 +101,7 @@ class AirFileApp extends StatelessWidget {
         transferServer: transferServer,
         transferClient: transferClient,
         discoveryService: discoveryService,
+        devDebugService: devDebugService,
       ),
     );
   }

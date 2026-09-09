@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/file_payload.dart';
 import '../models/peer_device.dart';
 import '../services/clipboard_sync_service.dart';
+import '../services/dev_debug_service.dart';
 import '../services/discovery_service.dart';
 import '../services/network_info_service.dart';
 import '../services/storage_service.dart';
@@ -11,6 +12,7 @@ import '../services/transfer_client.dart';
 import '../services/transfer_server.dart';
 import '../theme/app_theme.dart';
 import '../widgets/clipboard_sync_card.dart';
+import '../widgets/developer_debug_modal.dart';
 import '../widgets/drag_drop_staging_zone.dart';
 import '../widgets/peer_card.dart';
 import '../widgets/qr_hotspot_modal.dart';
@@ -24,6 +26,7 @@ class HomeScreen extends StatefulWidget {
   final TransferServer transferServer;
   final TransferClient transferClient;
   final StorageService storageService;
+  final DevDebugService devDebugService;
 
   const HomeScreen({
     super.key,
@@ -32,6 +35,7 @@ class HomeScreen extends StatefulWidget {
     required this.transferServer,
     required this.transferClient,
     required this.storageService,
+    required this.devDebugService,
   });
 
   @override
@@ -102,6 +106,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         port: widget.transferServer.port,
         isHotspot: widget.networkInfoService.isHotspot,
         deviceName: widget.networkInfoService.deviceName,
+      ),
+    );
+  }
+
+  void _showDevDebugModal() {
+    showDialog(
+      context: context,
+      builder: (_) => DeveloperDebugModal(
+        devDebugService: widget.devDebugService,
+        networkInfoService: widget.networkInfoService,
+        discoveryService: widget.discoveryService,
       ),
     );
   }
@@ -254,6 +269,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         widget.discoveryService,
         widget.transferServer,
         widget.transferClient,
+        widget.devDebugService,
       ]),
       builder: (context, child) {
         final profile = widget.networkInfoService.currentProfile;
@@ -769,6 +785,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ],
+              const SizedBox(width: 8),
+
+              // Wireless Debug Button
+              OutlinedButton.icon(
+                onPressed: _showDevDebugModal,
+                icon: Icon(
+                  Icons.bug_report_rounded,
+                  size: 14,
+                  color: widget.devDebugService.connectedDevices.isNotEmpty
+                      ? Colors.greenAccent
+                      : AppTheme.accentWhite,
+                ),
+                label: Text(
+                  isCompact ? 'Debug' : 'Wireless Debug',
+                  style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.2),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: widget.devDebugService.connectedDevices.isNotEmpty
+                      ? Colors.greenAccent
+                      : AppTheme.accentWhite,
+                  side: BorderSide(
+                    color: widget.devDebugService.connectedDevices.isNotEmpty
+                        ? Colors.green.withValues(alpha: 0.5)
+                        : AppTheme.cardBorderHover,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ),
               const SizedBox(width: 8),
 
               // QR Code Button

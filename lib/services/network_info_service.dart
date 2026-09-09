@@ -47,6 +47,7 @@ class NetworkInfoService extends ChangeNotifier {
   NetworkProfile get currentProfile => _currentProfile;
   String get deviceName => _deviceName;
   String get activeIp => _currentProfile.effectiveIp;
+  String get ipv4 => _currentProfile.ip;
   bool get isHotspot => _currentProfile.isHotspot;
 
   NetworkInfoService() {
