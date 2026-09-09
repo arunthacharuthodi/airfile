@@ -95,19 +95,19 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                         children: [
                           Text(
                             'Share to ${widget.peer.name}',
-                            style: GoogleFonts.alumniSans(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w400,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                               color: AppTheme.textPrimary,
-                              letterSpacing: 0.3,
+                              letterSpacing: 0.2,
                             ),
                           ),
                           Text(
                             'Bluetooth LE Peer',
-                            style: GoogleFonts.alumniSans(
-                              fontSize: 12,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 11,
                               color: AppTheme.textMuted,
-                              fontWeight: FontWeight.w300,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ],
@@ -141,7 +141,7 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                       Expanded(
                         child: Text(
                           '${widget.stagedFiles.length} file(s) staged: ${widget.stagedFiles.map((f) => "${f.name} (${_formatSize(f.size)})").join(", ")}',
-                          style: GoogleFonts.alumniSans(fontSize: 13, fontWeight: FontWeight.w300, color: AppTheme.textSecondary),
+                          style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -167,9 +167,9 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                         const SizedBox(width: 6),
                         Text(
                           'Scan with Camera to Download in Browser',
-                          style: GoogleFonts.alumniSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
                             color: AppTheme.textPrimary,
                           ),
                         ),
@@ -215,10 +215,10 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                           Expanded(
                             child: Text(
                               shareUrl,
-                              style: GoogleFonts.alumniSans(
-                                fontSize: 13,
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
                                 color: AppTheme.textPrimary,
-                                fontWeight: FontWeight.w300,
+                                fontWeight: FontWeight.w400,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -242,7 +242,7 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                     Text(
                       'Open camera on ${widget.peer.name} and scan code to download',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.alumniSans(fontSize: 12, fontWeight: FontWeight.w300, color: AppTheme.textMuted),
+                      style: GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w400, color: AppTheme.textMuted),
                     ),
                   ],
                 ),
@@ -263,7 +263,7 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                     children: [
                       Text(
                         'Direct App Send (requires AirFile app open on peer)',
-                        style: GoogleFonts.alumniSans(fontSize: 13, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
+                        style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textSecondary),
                       ),
                       const SizedBox(height: 6),
                       Row(
@@ -271,7 +271,7 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                           Expanded(
                             child: TextField(
                               controller: _ipController,
-                              style: GoogleFonts.alumniSans(fontSize: 14, fontWeight: FontWeight.w300),
+                              style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w400),
                               decoration: InputDecoration(
                                 hintText: 'Device IP',
                                 isDense: true,
@@ -308,7 +308,7 @@ class _ShareToDeviceModalState extends State<ShareToDeviceModal> {
                             ),
                             child: Text(
                               _isSending ? 'Sending...' : 'Send',
-                              style: GoogleFonts.alumniSans(fontSize: 13, fontWeight: FontWeight.w400),
+                              style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500),
                             ),
                           ),
                         ],

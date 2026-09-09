@@ -101,10 +101,10 @@ class _RadarVisualizerState extends State<RadarVisualizer>
                     const SizedBox(width: 6),
                     Text(
                       widget.isScanning ? 'SCANNING NETWORK' : 'DISCOVERY ACTIVE',
-                      style: GoogleFonts.alumniSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 1.2,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.8,
                         color: AppTheme.textSecondary,
                       ),
                     ),
@@ -115,19 +115,19 @@ class _RadarVisualizerState extends State<RadarVisualizer>
                   widget.peerCount == 0
                       ? 'Listening for nearby devices'
                       : '${widget.peerCount} device${widget.peerCount > 1 ? 's' : ''} detected nearby',
-                  style: GoogleFonts.alumniSans(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w400,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                     color: AppTheme.textPrimary,
-                    letterSpacing: 0.3,
+                    letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Wi-Fi Multicast • iPhone Hotspot Sweep • Bluetooth LE',
-                  style: GoogleFonts.alumniSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w300,
+                  style: GoogleFonts.dmSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
                     color: AppTheme.textMuted,
                   ),
                 ),
@@ -146,10 +146,10 @@ class _RadarVisualizerState extends State<RadarVisualizer>
                       : const Icon(Icons.refresh_rounded, size: 13),
                   label: Text(
                     widget.isScanning ? 'Scanning...' : 'Scan Now',
-                    style: GoogleFonts.alumniSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.5,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   style: OutlinedButton.styleFrom(

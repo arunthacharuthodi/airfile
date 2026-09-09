@@ -69,11 +69,11 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                     const SizedBox(width: 8),
                     Text(
                       'Staged Files for Sharing',
-                      style: GoogleFonts.alumniSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: AppTheme.textPrimary,
-                        letterSpacing: 0.4,
+                        letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -86,9 +86,9 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                       ),
                       child: Text(
                         '${widget.stagedFiles.length}',
-                        style: GoogleFonts.alumniSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
                           color: AppTheme.textSecondary,
                         ),
                       ),
@@ -103,7 +103,7 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                         icon: const Icon(Icons.clear_rounded, size: 13, color: AppTheme.textMuted),
                         label: Text(
                           'Clear',
-                          style: GoogleFonts.alumniSans(color: AppTheme.textMuted, fontSize: 13),
+                          style: GoogleFonts.dmSans(color: AppTheme.textMuted, fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -117,7 +117,7 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                       icon: const Icon(Icons.add_rounded, size: 14),
                       label: Text(
                         'Browse Files',
-                        style: GoogleFonts.alumniSans(fontSize: 13, fontWeight: FontWeight.w400),
+                        style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.accentWhite,
@@ -162,9 +162,9 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                         _isDraggingOver
                             ? 'Drop files to stage them'
                             : 'Drag & drop files here from Finder, or click to browse',
-                        style: GoogleFonts.alumniSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w300,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
                           color: _isDraggingOver ? AppTheme.accentWhite : AppTheme.textSecondary,
                         ),
                       ),
@@ -198,9 +198,9 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                               children: [
                                 Text(
                                   file.name,
-                                  style: GoogleFonts.alumniSans(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
                                     color: AppTheme.textPrimary,
                                   ),
                                   maxLines: 1,
@@ -208,9 +208,9 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                                 ),
                                 Text(
                                   '${_formatSize(file.size)} • ${file.mimeType}',
-                                  style: GoogleFonts.alumniSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w300,
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w400,
                                     color: AppTheme.textMuted,
                                   ),
                                 ),

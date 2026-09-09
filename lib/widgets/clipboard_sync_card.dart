@@ -61,10 +61,10 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                       const SizedBox(width: 8),
                       Text(
                         'UNIVERSAL CLIPBOARD',
-                        style: GoogleFonts.alumniSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 1.2,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
                           color: AppTheme.textSecondary,
                         ),
                       ),
@@ -85,10 +85,10 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                     children: [
                       Text(
                         service.autoSyncEnabled ? 'AUTO-SYNC ON' : 'AUTO-SYNC OFF',
-                        style: GoogleFonts.alumniSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.8,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                           color: service.autoSyncEnabled ? AppTheme.accentWhite : AppTheme.textMuted,
                         ),
                       ),
@@ -129,11 +129,10 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                         text,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.alumniSans(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w300,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
                           color: AppTheme.textPrimary,
-                          letterSpacing: 0.3,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -142,9 +141,9 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                         children: [
                           Text(
                             'Synced from $sender • ${text.length} chars',
-                            style: GoogleFonts.alumniSans(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w300,
+                            style: GoogleFonts.dmSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
                               color: AppTheme.textMuted,
                             ),
                           ),
@@ -165,9 +164,9 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                                       const SizedBox(width: 4),
                                       Text(
                                         _justCopied ? 'Copied' : 'Copy',
-                                        style: GoogleFonts.alumniSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w400,
+                                        style: GoogleFonts.dmSans(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
                                           color: AppTheme.accentWhite,
                                         ),
                                       ),
@@ -187,9 +186,9 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                                       const SizedBox(width: 4),
                                       Text(
                                         'Push Now',
-                                        style: GoogleFonts.alumniSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w400,
+                                        style: GoogleFonts.dmSans(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
                                           color: AppTheme.accentWhite,
                                         ),
                                       ),
@@ -219,9 +218,9 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                       Expanded(
                         child: Text(
                           'Copy any text on Mac, iOS, Windows, or Android to auto-sync',
-                          style: GoogleFonts.alumniSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w300,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
                             color: AppTheme.textMuted,
                           ),
                         ),
@@ -231,7 +230,7 @@ class _ClipboardSyncCardState extends State<ClipboardSyncCard> {
                         icon: const Icon(Icons.arrow_upward_rounded, size: 12),
                         label: Text(
                           'Push Clipboard',
-                          style: GoogleFonts.alumniSans(fontSize: 13, fontWeight: FontWeight.w400),
+                          style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.accentWhite,
