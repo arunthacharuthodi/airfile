@@ -47,59 +47,17 @@ cp -R "${APP_PATH}" "${STAGING_DIR}/AirFile.app"
 echo "Creating /Applications shortcut..."
 ln -s /Applications "${STAGING_DIR}/Applications"
 
-echo "=== [3/4] Creating Formatted Disk Image ==="
-TEMP_DMG="${ROOT_DIR}/build/macos/AirFile-temp.dmg"
-rm -f "${TEMP_DMG}" "${DMG_OUTPUT}"
+echo "=== [3/3] Creating Compressed Disk Image (AirFile.dmg) ==="
+rm -f "${DMG_OUTPUT}"
 
 hdiutil create \
     -volname "AirFile" \
     -srcfolder "${STAGING_DIR}" \
     -ov \
-    -fs HFS+ \
-    -format UDRW \
-    "${TEMP_DMG}"
-
-# Attempt visual styling via AppleScript if GUI is available
-echo "Configuring Finder window presentation..."
-MOUNT_OUTPUT=$(hdiutil attach -readwrite -noverify -noautoopen "${TEMP_DMG}" | grep "/Volumes/AirFile" || true)
-if [ -n "${MOUNT_OUTPUT}" ]; then
-    MOUNT_POINT="/Volumes/AirFile"
-    osascript -e '
-        tell application "Finder"
-            tell disk "AirFile"
-                open
-                set current view of container window to icon view
-                set toolbar visible of container window to false
-                set statusbar visible of container window to false
-                set the bounds of container window to {400, 200, 940, 520}
-                set viewOptions to the icon view options of container window
-                set icon size of viewOptions to 120
-                set arrangement of viewOptions to not arranged
-                try
-                    set position of item "AirFile.app" of container window to {130, 160}
-                    set position of item "Applications" of container window to {410, 160}
-                end try
-                close
-                open
-                update without registering applications
-                delay 1
-            end tell
-        end tell
-    ' || echo "Notice: Headless or permission-restricted AppleScript execution; standard view applied."
-    
-    sync || true
-    hdiutil detach "${MOUNT_POINT}" -force || true
-    sync
-    sleep 2
-fi
-
-echo "=== [4/4] Compressing Final Production DMG ==="
-hdiutil convert "${TEMP_DMG}" \
     -format UDZO \
     -imagekey zlib-level=9 \
-    -o "${DMG_OUTPUT}"
+    "${DMG_OUTPUT}"
 
-rm -f "${TEMP_DMG}"
 rm -rf "${STAGING_DIR}"
 
 echo "======================================================="

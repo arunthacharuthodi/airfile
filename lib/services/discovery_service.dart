@@ -82,9 +82,12 @@ class DiscoveryService extends ChangeNotifier {
       final isHotspot = networkInfoService.isHotspot;
 
       if (candidates.isNotEmpty) {
-        // Run parallel HTTP ping sweep across candidate IPs
-        final futures = candidates.map((targetIp) => _pingTarget(targetIp, isHotspot));
-        await Future.wait(futures);
+        // Run parallel HTTP ping sweep across candidate IPs in batches of 35
+        const batchSize = 35;
+        for (int i = 0; i < candidates.length; i += batchSize) {
+          final chunk = candidates.skip(i).take(batchSize);
+          await Future.wait(chunk.map((targetIp) => _pingTarget(targetIp, isHotspot)));
+        }
       }
 
       // Also trigger a quick BLE scan burst if Bluetooth is on
@@ -241,18 +244,30 @@ class DiscoveryService extends ChangeNotifier {
         'name': networkInfoService.deviceName,
         'ip': networkInfoService.activeIp,
         'port': localPort,
-        'type': 'macos',
+        'type': Platform.isMacOS
+            ? 'macos'
+            : (Platform.isWindows
+                ? 'windows'
+                : (Platform.isAndroid ? 'android' : 'ios')),
         'medium': networkInfoService.isHotspot ? 'hotspot' : 'wifi',
         'timestamp': DateTime.now().toIso8601String(),
       });
 
       final data = utf8.encode(payload);
 
-      // Send to multicast group
+      // 1. Send to multicast group
       _udpSocket?.send(data, InternetAddress(multicastGroup), broadcastPort);
 
-      // Send to broadcast address 255.255.255.255
+      // 2. Send to global broadcast address 255.255.255.255
       _udpSocket?.send(data, InternetAddress('255.255.255.255'), broadcastPort);
+
+      // 3. Send to directed subnet broadcast if available
+      final subnetBroadcast = networkInfoService.currentProfile.subnetBroadcast;
+      if (subnetBroadcast != null) {
+        try {
+          _udpSocket?.send(data, InternetAddress(subnetBroadcast), broadcastPort);
+        } catch (_) {}
+      }
     } catch (_) {}
   }
 

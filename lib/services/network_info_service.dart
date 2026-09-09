@@ -10,6 +10,7 @@ class NetworkProfile {
   final String networkTypeLabel;
   final List<String> subnetCandidates;
   final bool isClatIpv6Only;
+  final String? subnetBroadcast;
 
   const NetworkProfile({
     required this.ip,
@@ -19,6 +20,7 @@ class NetworkProfile {
     required this.networkTypeLabel,
     required this.subnetCandidates,
     this.isClatIpv6Only = false,
+    this.subnetBroadcast,
   });
 
   String get effectiveIp {
@@ -100,7 +102,7 @@ class NetworkInfoService extends ChangeNotifier {
           }
         }
 
-        if (ipv4 != null && _isIPhoneHotspot(ipv4, interface.name)) {
+        if (ipv4 != null && _isHotspot(ipv4, interface.name)) {
           selected = _buildHotspotProfile(ipv4, ipv6, interface.name);
           break;
         }
@@ -167,9 +169,11 @@ class NetworkInfoService extends ChangeNotifier {
     }
   }
 
-  bool _isIPhoneHotspot(String ip, String interfaceName) {
-    if (ip.startsWith('172.20.10.')) return true;
-    if (ip.startsWith('192.0.0.')) return true;
+  bool _isHotspot(String ip, String interfaceName) {
+    if (ip.startsWith('172.20.10.')) return true; // iPhone Hotspot
+    if (ip.startsWith('192.168.43.')) return true; // Android Hotspot default
+    if (ip.startsWith('192.168.49.')) return true; // Wi-Fi Direct
+    if (ip.startsWith('192.0.0.')) return true; // CLAT 464 Hotspot
     return false;
   }
 
@@ -189,46 +193,67 @@ class NetworkInfoService extends ChangeNotifier {
   NetworkProfile _buildHotspotProfile(String ip, String? ipv6, String interfaceName) {
     final candidates = <String>[];
     final isClat = ip.startsWith('192.0.0.');
+    String? broadcast;
 
     if (ip.startsWith('172.20.10.')) {
+      broadcast = '172.20.10.15';
       for (int i = 1; i <= 14; i++) {
         final hostIp = '172.20.10.$i';
         if (hostIp != ip) candidates.add(hostIp);
       }
+    } else if (ip.startsWith('192.168.43.')) {
+      broadcast = '192.168.43.255';
+      candidates.add('192.168.43.1'); // Android phone hotspot gateway
+      for (int i = 2; i <= 60; i++) {
+        final hostIp = '192.168.43.$i';
+        if (hostIp != ip) candidates.add(hostIp);
+      }
     } else if (isClat) {
-      for (int i = 1; i <= 10; i++) {
+      for (int i = 1; i <= 20; i++) {
         final hostIp = '192.0.0.$i';
         if (hostIp != ip) candidates.add(hostIp);
       }
     }
+
+    String label = 'Personal Hotspot ($interfaceName)';
+    if (ip.startsWith('172.20.10.')) label = 'iPhone Hotspot ($interfaceName)';
+    if (ip.startsWith('192.168.43.')) label = 'Android Hotspot ($interfaceName)';
+    if (isClat) label = 'Hotspot (IPv6 / CLAT)';
 
     return NetworkProfile(
       ip: ip,
       ipv6: ipv6,
       interfaceName: interfaceName,
       isHotspot: true,
-      networkTypeLabel: isClat ? 'iPhone Hotspot (IPv6 / CLAT)' : 'iPhone Hotspot ($interfaceName)',
+      networkTypeLabel: label,
       subnetCandidates: candidates,
       isClatIpv6Only: isClat,
+      subnetBroadcast: broadcast,
     );
   }
 
   NetworkProfile _buildLanProfile(String ip, String? ipv6, String interfaceName) {
     final candidates = <String>[];
+    String? broadcast;
     final parts = ip.split('.');
     if (parts.length == 4) {
       final prefix = '${parts[0]}.${parts[1]}.${parts[2]}';
       final currentHost = int.tryParse(parts[3]) ?? 1;
+      broadcast = '$prefix.255';
 
+      // 1. Gateway
       candidates.add('$prefix.1');
-      for (int offset = 1; offset <= 20; offset++) {
+
+      // 2. Immediate neighbors window (±30)
+      for (int offset = 1; offset <= 30; offset++) {
         final up = currentHost + offset;
         final down = currentHost - offset;
-        if (up > 1 && up < 255) candidates.add('$prefix.$up');
-        if (down > 1 && down < 255) candidates.add('$prefix.$down');
+        if (up > 1 && up < 255 && '$prefix.$up' != ip) candidates.add('$prefix.$up');
+        if (down > 1 && down < 255 && '$prefix.$down' != ip) candidates.add('$prefix.$down');
       }
 
-      for (int i = 100; i <= 130; i++) {
+      // 3. Full subnet hosts (2..254) so no device is ever missed
+      for (int i = 2; i < 255; i++) {
         final candidate = '$prefix.$i';
         if (!candidates.contains(candidate) && candidate != ip) {
           candidates.add(candidate);
@@ -243,6 +268,7 @@ class NetworkInfoService extends ChangeNotifier {
       isHotspot: false,
       networkTypeLabel: 'Local Wi-Fi / LAN ($interfaceName)',
       subnetCandidates: candidates,
+      subnetBroadcast: broadcast,
     );
   }
 
