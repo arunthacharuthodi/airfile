@@ -96,12 +96,8 @@ class ClipboardSyncService extends ChangeNotifier {
   /// Broadcasts clipboard text to all active paired peers.
   Future<void> broadcastToPeers(String text, [String? textHash]) async {
     final hash = textHash ?? _hashText(text);
-    // Only broadcast to online peers that are paired
-    final peers = discoveryService.peers.where((p) {
-      if (!p.isOnline) return false;
-      if (pairingService != null && !pairingService!.isPaired(p.id)) return false;
-      return true;
-    }).toList();
+    // Broadcast to all active online peers
+    final peers = discoveryService.peers.where((p) => p.isOnline).toList();
     if (peers.isEmpty) return;
 
     _isBroadcasting = true;
