@@ -3,6 +3,8 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import '../services/transfer_server.dart';
 import '../theme/app_theme.dart';
 
@@ -26,21 +28,68 @@ class DragDropStagingZone extends StatefulWidget {
 
 class _DragDropStagingZoneState extends State<DragDropStagingZone> {
   bool _isDraggingOver = false;
+  bool _isPicking = false;
 
   Future<void> _pickFiles() async {
+    if (_isPicking) return;
+    setState(() => _isPicking = true);
     try {
       final files = await FilePicker.pickFiles(
         allowMultiple: true,
         dialogTitle: 'Select files to share',
       );
 
-      for (final file in files) {
-        if (file.path != null) {
-          widget.onFileAdded(file.path!);
+      if (files.isEmpty) return;
+
+      for (int i = 0; i < files.length; i++) {
+        final file = files[i];
+        String? resolvedPath;
+
+        // 1. Direct path check (Desktop / local direct path)
+        if (file.path != null && file.path!.isNotEmpty && await File(file.path!).exists()) {
+          resolvedPath = file.path!;
+        } else {
+          // 2. Android Content URI / SAF resolution:
+          // Modern Android returns content:// URIs where file.path is null.
+          // We stream/copy the file into a dedicated app cache staging directory with its original filename.
+          try {
+            final tempDir = await getTemporaryDirectory();
+            final stagingDir = Directory(
+              p.join(tempDir.path, 'airfile_staged_${DateTime.now().millisecondsSinceEpoch}_$i'),
+            );
+            await stagingDir.create(recursive: true);
+            final destFile = File(p.join(stagingDir.path, file.name));
+
+            try {
+              await file.xFile.saveTo(destFile.path);
+            } catch (_) {
+              final sink = destFile.openWrite();
+              await sink.addStream(file.readAsByteStream());
+              await sink.flush();
+              await sink.close();
+            }
+
+            if (await destFile.exists()) {
+              resolvedPath = destFile.path;
+            }
+          } catch (copyErr) {
+            debugPrint('Error caching picked file ${file.name}: $copyErr');
+          }
+        }
+
+        if (resolvedPath != null) {
+          widget.onFileAdded(resolvedPath);
         }
       }
     } catch (e) {
       debugPrint('Error picking files: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file picker: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
     }
   }
 
@@ -113,10 +162,16 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                       const SizedBox(width: 6),
                     ],
                     OutlinedButton.icon(
-                      onPressed: _pickFiles,
-                      icon: const Icon(Icons.add_rounded, size: 14),
+                      onPressed: _isPicking ? null : _pickFiles,
+                      icon: _isPicking
+                          ? const SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppTheme.accentWhite),
+                            )
+                          : const Icon(Icons.add_rounded, size: 14),
                       label: Text(
-                        'Browse Files',
+                        _isPicking ? 'Loading...' : 'Browse Files',
                         style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500),
                       ),
                       style: OutlinedButton.styleFrom(
@@ -137,7 +192,7 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
             // Drop Area / Staged Files Content
             if (widget.stagedFiles.isEmpty)
               InkWell(
-                onTap: _pickFiles,
+                onTap: _isPicking ? null : _pickFiles,
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   width: double.infinity,
@@ -161,7 +216,11 @@ class _DragDropStagingZoneState extends State<DragDropStagingZone> {
                       Text(
                         _isDraggingOver
                             ? 'Drop files to stage them'
-                            : 'Drag & drop files here from Finder, or click to browse',
+                            : (_isPicking
+                                ? 'Preparing selected files...'
+                                : (Platform.isAndroid || Platform.isIOS
+                                    ? 'Tap to select files from device storage'
+                                    : 'Drag & drop files here from Finder, or click to browse')),
                         style: GoogleFonts.dmSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
