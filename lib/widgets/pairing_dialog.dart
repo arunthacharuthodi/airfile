@@ -58,7 +58,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
         SnackBar(
           content: Text(
             'Successfully paired with ${widget.targetPeer.name}',
-            style: GoogleFonts.dmSans(fontSize: 13),
+            style: GoogleFonts.ptSans(fontSize: 13),
           ),
           backgroundColor: AppTheme.cardBg,
         ),
@@ -117,7 +117,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
                     const SizedBox(width: 6),
                     Text(
                       'DEVICE PAIRING',
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.8,
@@ -128,7 +128,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
                 ),
                 Text(
                   '$_secondsLeft s',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: AppTheme.textMuted,
@@ -146,7 +146,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
                 const SizedBox(width: 8),
                 Text(
                   widget.targetPeer.name,
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.textPrimary,
@@ -160,7 +160,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
                   ? 'Verify this code matches on ${widget.targetPeer.name}'
                   : 'Pairing could not be completed',
               textAlign: TextAlign.center,
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.ptSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: AppTheme.textMuted,
@@ -180,7 +180,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
               child: Center(
                 child: Text(
                   _formatCode(_code),
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 32,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 4,
@@ -195,7 +195,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.dmSans(
+                style: GoogleFonts.ptSans(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   color: Colors.redAccent,
@@ -216,7 +216,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
                   const SizedBox(width: 10),
                   Text(
                     'Waiting for approval on ${widget.targetPeer.name}...',
-                    style: GoogleFonts.dmSans(fontSize: 12, color: AppTheme.textSecondary),
+                    style: GoogleFonts.ptSans(fontSize: 12, color: AppTheme.textSecondary),
                   ),
                 ],
               ),
@@ -235,7 +235,7 @@ class _PairingInitiatorModalState extends State<PairingInitiatorModal> {
                 ),
                 child: Text(
                   'Cancel',
-                  style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.ptSans(fontSize: 13, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -297,7 +297,7 @@ class IncomingPairingDialog extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'PAIRING REQUEST',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.0,
@@ -311,7 +311,7 @@ class IncomingPairingDialog extends StatelessWidget {
             // Device Name
             Text(
               request.initiatorName,
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.ptSans(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
@@ -321,7 +321,7 @@ class IncomingPairingDialog extends StatelessWidget {
             Text(
               'wants to connect and exchange files with this device',
               textAlign: TextAlign.center,
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.ptSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: AppTheme.textMuted,
@@ -342,7 +342,7 @@ class IncomingPairingDialog extends StatelessWidget {
                 children: [
                   Text(
                     _formatCode(request.code),
-                    style: GoogleFonts.dmSans(
+                    style: GoogleFonts.ptSans(
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 4,
@@ -352,7 +352,7 @@ class IncomingPairingDialog extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'VERIFICATION CODE',
-                    style: GoogleFonts.dmSans(
+                    style: GoogleFonts.ptSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 1.0,
@@ -378,7 +378,7 @@ class IncomingPairingDialog extends StatelessWidget {
                     ),
                     child: Text(
                       'Decline',
-                      style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.ptSans(fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ),
@@ -394,7 +394,7 @@ class IncomingPairingDialog extends StatelessWidget {
                     ),
                     child: Text(
                       'Accept & Trust',
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.2,

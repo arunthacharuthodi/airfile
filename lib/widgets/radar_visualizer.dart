@@ -101,9 +101,9 @@ class _RadarVisualizerState extends State<RadarVisualizer>
                     const SizedBox(width: 6),
                     Text(
                       widget.isScanning ? 'SCANNING NETWORK' : 'DISCOVERY ACTIVE',
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                         letterSpacing: 0.8,
                         color: AppTheme.textSecondary,
                       ),
@@ -115,9 +115,9 @@ class _RadarVisualizerState extends State<RadarVisualizer>
                   widget.peerCount == 0
                       ? 'Listening for nearby devices'
                       : '${widget.peerCount} device${widget.peerCount > 1 ? 's' : ''} detected nearby',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
                     letterSpacing: 0.2,
                   ),
@@ -125,7 +125,7 @@ class _RadarVisualizerState extends State<RadarVisualizer>
                 const SizedBox(height: 2),
                 Text(
                   'Wi-Fi Multicast • iPhone Hotspot Sweep • Bluetooth LE',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: AppTheme.textMuted,
@@ -146,9 +146,9 @@ class _RadarVisualizerState extends State<RadarVisualizer>
                       : const Icon(Icons.refresh_rounded, size: 13),
                   label: Text(
                     widget.isScanning ? 'Scanning...' : 'Scan Now',
-                    style: GoogleFonts.dmSans(
+                    style: GoogleFonts.ptSans(
                       fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                       letterSpacing: 0.3,
                     ),
                   ),

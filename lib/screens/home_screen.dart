@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           SnackBar(
             content: Text(
               'Received ${payload.name} from ${payload.peerName}',
-              style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w400),
+              style: GoogleFonts.ptSans(fontSize: 13, fontWeight: FontWeight.w400),
             ),
             action: payload.savedPath != null
                 ? SnackBarAction(
@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       builder: (ctx) => AlertDialog(
         title: Text(
           'Connect by IP Address',
-          style: GoogleFonts.dmSans(fontSize: 16, fontWeight: FontWeight.w600),
+          style: GoogleFonts.ptSans(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -121,13 +121,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           children: [
             Text(
               'Enter peer device IP address:',
-              style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
+              style: GoogleFonts.ptSans(fontSize: 13, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _directIpController,
               autofocus: true,
-              style: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w400),
+              style: GoogleFonts.ptSans(fontSize: 14, fontWeight: FontWeight.w400),
               decoration: InputDecoration(
                 hintText: widget.networkInfoService.isHotspot ? '172.20.10.1' : '192.168.1.50',
                 prefixIcon: const Icon(Icons.lan_outlined, color: AppTheme.textSecondary, size: 16),
@@ -146,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.dmSans(fontSize: 13, color: AppTheme.textMuted)),
+            child: Text('Cancel', style: GoogleFonts.ptSans(fontSize: 13, color: AppTheme.textMuted)),
           ),
           OutlinedButton(
             onPressed: () async {
@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     SnackBar(
                       content: Text(
                         success ? 'Connected to peer at $ip' : 'Could not reach device at $ip',
-                        style: GoogleFonts.dmSans(fontSize: 13),
+                        style: GoogleFonts.ptSans(fontSize: 13),
                       ),
                     ),
                   );
@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               foregroundColor: AppTheme.accentWhite,
               side: const BorderSide(color: AppTheme.cardBorderHover),
             ),
-            child: Text('Connect', style: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w500)),
+            child: Text('Connect', style: GoogleFonts.ptSans(fontSize: 13, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         SnackBar(
           content: Text(
             'Please stage files first by dropping them in or clicking Browse',
-            style: GoogleFonts.dmSans(fontSize: 13),
+            style: GoogleFonts.ptSans(fontSize: 13),
           ),
         ),
       );
@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               SnackBar(
                 content: Text(
                   'Successfully sent ${payload.name} to ${peer.name}',
-                  style: GoogleFonts.dmSans(fontSize: 13),
+                  style: GoogleFonts.ptSans(fontSize: 13),
                 ),
               ),
             );
@@ -236,7 +236,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               SnackBar(
                 content: Text(
                   'Notice: $err',
-                  style: GoogleFonts.dmSans(fontSize: 13),
+                  style: GoogleFonts.ptSans(fontSize: 13),
                 ),
               ),
             );
@@ -392,9 +392,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 const SizedBox(width: 8),
                 Text(
                   'Discovered Peers',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
                     letterSpacing: 0.2,
                   ),
@@ -409,9 +409,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   child: Text(
                     '${peers.length}',
-                    style: GoogleFonts.dmSans(
+                    style: GoogleFonts.ptSans(
                       fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
                       color: AppTheme.textSecondary,
                     ),
                   ),
@@ -423,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               icon: const Icon(Icons.add_link_rounded, size: 14, color: AppTheme.textSecondary),
               label: Text(
                 'Direct IP',
-                style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textSecondary),
+                style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
               ),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -470,9 +470,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const SizedBox(width: 8),
             Text(
               'Live Transfers',
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.ptSans(
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimary,
                 letterSpacing: 0.2,
               ),
@@ -487,9 +487,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 child: Text(
                   '${activeTransfers.length}',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 11,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
                     color: AppTheme.accentWhite,
                   ),
                 ),
@@ -509,7 +509,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Center(
               child: Text(
                 'No active transfers',
-                style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w400, color: AppTheme.textMuted),
+                style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.w400, color: AppTheme.textMuted),
               ),
             ),
           )
@@ -534,9 +534,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 const SizedBox(width: 8),
                 Text(
                   'Recent History',
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
                     letterSpacing: 0.2,
                   ),
@@ -558,7 +558,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                     child: Text(
                       'Clear All',
-                      style: GoogleFonts.dmSans(fontSize: 11, color: AppTheme.textMuted),
+                      style: GoogleFonts.ptSans(fontSize: 11, color: AppTheme.textMuted),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -568,7 +568,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   icon: const Icon(Icons.folder_outlined, size: 13, color: AppTheme.textSecondary),
                   label: Text(
                     'Downloads',
-                    style: GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.textSecondary),
+                    style: GoogleFonts.ptSans(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
                   ),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -592,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Center(
               child: Text(
                 'Transfers will appear here',
-                style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w400, color: AppTheme.textMuted),
+                style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.w400, color: AppTheme.textMuted),
               ),
             ),
           )
@@ -659,9 +659,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     children: [
                       Text(
                         'AIRFILE',
-                        style: GoogleFonts.dmSans(
+                        style: GoogleFonts.ptSans(
                           fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
                           color: AppTheme.textPrimary,
                         ),
@@ -682,9 +682,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 : (Platform.isIOS
                                     ? 'IOS'
                                     : (Platform.isAndroid ? 'ANDROID' : 'PEER'))),
-                          style: GoogleFonts.dmSans(
+                          style: GoogleFonts.ptSans(
                             fontSize: 9,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             letterSpacing: 0.6,
                             color: AppTheme.textSecondary,
                           ),
@@ -694,7 +694,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   Text(
                     widget.networkInfoService.deviceName,
-                    style: GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w400, color: AppTheme.textMuted),
+                    style: GoogleFonts.ptSans(fontSize: 11, fontWeight: FontWeight.w400, color: AppTheme.textMuted),
                   ),
                 ],
               ),
@@ -723,7 +723,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       const SizedBox(width: 6),
                       Text(
                         '${profile.networkTypeLabel}: ${profile.effectiveIp}',
-                        style: GoogleFonts.dmSans(
+                        style: GoogleFonts.ptSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w400,
                           color: AppTheme.textPrimary,
@@ -756,9 +756,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       const SizedBox(width: 4),
                       Text(
                         widget.discoveryService.isBluetoothAvailable ? 'BLE ON' : 'BLE OFF',
-                        style: GoogleFonts.dmSans(
+                        style: GoogleFonts.ptSans(
                           fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                           color: widget.discoveryService.isBluetoothAvailable
                               ? AppTheme.textSecondary
                               : AppTheme.textMuted,
@@ -777,7 +777,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: const Icon(Icons.qr_code_rounded, size: 14),
                 label: Text(
                   isCompact ? 'QR' : 'QR Share',
-                  style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.2),
+                  style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.2),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.accentWhite,
@@ -816,9 +816,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             isHotspot
                 ? 'Connected to iPhone Personal Hotspot'
                 : 'Searching for nearby devices',
-            style: GoogleFonts.dmSans(
+            style: GoogleFonts.ptSans(
               fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold,
               color: AppTheme.textPrimary,
             ),
           ),
@@ -830,7 +830,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? 'Devices can connect directly via browser or peer app. Click "QR Share" in top bar to display the connection code.'
                   : 'Devices on your network will appear here automatically. You can also connect directly by entering peer IP.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.ptSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: AppTheme.textSecondary,
@@ -846,7 +846,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: const Icon(Icons.qr_code_2_rounded, size: 14),
                 label: Text(
                   'Show QR Code',
-                  style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.accentWhite,
@@ -861,7 +861,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: const Icon(Icons.cable_rounded, size: 14),
                 label: Text(
                   'Enter Peer IP',
-                  style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.textSecondary,

@@ -63,7 +63,7 @@ class TransferProgressCard extends StatelessWidget {
                   children: [
                     Text(
                       payload.name,
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: AppTheme.textPrimary,
@@ -73,7 +73,7 @@ class TransferProgressCard extends StatelessWidget {
                     ),
                     Text(
                       '${isOutgoing ? 'To' : 'From'} ${payload.peerName} • ${payload.formattedSize}',
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
                         color: AppTheme.textMuted,
@@ -95,7 +95,7 @@ class TransferProgressCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     minimumSize: Size.zero,
                   ),
-                  child: Text('Finder', style: GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.accentWhite)),
+                  child: Text('Finder', style: GoogleFonts.ptSans(fontSize: 11, fontWeight: FontWeight.w500, color: AppTheme.accentWhite)),
                 ),
               ] else if (payload.status.isActive && onCancel != null) ...[
                 const SizedBox(width: 6),
@@ -142,11 +142,11 @@ class TransferProgressCard extends StatelessWidget {
                   payload.status == TransferStatus.connecting
                       ? 'Connecting...'
                       : '${(payload.progress * 100).toStringAsFixed(0)}%',
-                  style: GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
+                  style: GoogleFonts.ptSans(fontSize: 11, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
                 ),
                 Text(
                   payload.formattedSpeed,
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.ptSans(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
                     color: AppTheme.textSecondary,
@@ -160,7 +160,7 @@ class TransferProgressCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               payload.errorMessage!,
-              style: GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
+              style: GoogleFonts.ptSans(fontSize: 11, fontWeight: FontWeight.w400, color: AppTheme.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -203,7 +203,7 @@ class TransferProgressCard extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: GoogleFonts.dmSans(
+        style: GoogleFonts.ptSans(
           fontSize: 10,
           fontWeight: FontWeight.w500,
           color: AppTheme.textSecondary,

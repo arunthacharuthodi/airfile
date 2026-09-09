@@ -56,7 +56,7 @@ class QrHotspotModal extends StatelessWidget {
                       children: [
                         Text(
                           'Scan to Connect',
-                          style: GoogleFonts.dmSans(
+                          style: GoogleFonts.ptSans(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.textPrimary,
@@ -65,7 +65,7 @@ class QrHotspotModal extends StatelessWidget {
                         ),
                         Text(
                           isHotspot ? 'iPhone Personal Hotspot' : 'Local Wi-Fi Network',
-                          style: GoogleFonts.dmSans(
+                          style: GoogleFonts.ptSans(
                             fontSize: 11,
                             color: AppTheme.textMuted,
                             fontWeight: FontWeight.w400,
@@ -124,7 +124,7 @@ class QrHotspotModal extends StatelessWidget {
                   Expanded(
                     child: Text(
                       shareUrl,
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 12,
                         color: AppTheme.textPrimary,
                         fontWeight: FontWeight.w400,
@@ -183,7 +183,7 @@ class QrHotspotModal extends StatelessWidget {
       children: [
         Text(
           '$number.',
-          style: GoogleFonts.dmSans(
+          style: GoogleFonts.ptSans(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color: AppTheme.textSecondary,
@@ -193,7 +193,7 @@ class QrHotspotModal extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.dmSans(
+            style: GoogleFonts.ptSans(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: AppTheme.textSecondary,

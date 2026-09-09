@@ -19,7 +19,7 @@ class AppTheme {
   static const Color accentDark = Color(0xFF1C1C1C);
 
   static ThemeData get darkTheme {
-    final baseTextTheme = GoogleFonts.dmSansTextTheme(
+    final baseTextTheme = GoogleFonts.ptSansTextTheme(
       ThemeData.dark().textTheme,
     );
 
@@ -33,14 +33,14 @@ class AppTheme {
         error: accentSilver,
       ),
       textTheme: baseTextTheme.copyWith(
-        displayLarge: GoogleFonts.dmSans(fontSize: 22, fontWeight: FontWeight.w600, color: textPrimary),
-        displayMedium: GoogleFonts.dmSans(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
-        titleLarge: GoogleFonts.dmSans(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary, letterSpacing: 0.2),
-        titleMedium: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
-        bodyLarge: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w400, color: textPrimary),
-        bodyMedium: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w400, color: textSecondary),
-        bodySmall: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w400, color: textMuted),
-        labelLarge: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.w500, color: textPrimary, letterSpacing: 0.4),
+        displayLarge: GoogleFonts.ptSans(fontSize: 22, fontWeight: FontWeight.bold, color: textPrimary),
+        displayMedium: GoogleFonts.ptSans(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+        titleLarge: GoogleFonts.ptSans(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary, letterSpacing: 0.2),
+        titleMedium: GoogleFonts.ptSans(fontSize: 14, fontWeight: FontWeight.bold, color: textPrimary),
+        bodyLarge: GoogleFonts.ptSans(fontSize: 14, fontWeight: FontWeight.w400, color: textPrimary),
+        bodyMedium: GoogleFonts.ptSans(fontSize: 13, fontWeight: FontWeight.w400, color: textSecondary),
+        bodySmall: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.w400, color: textMuted),
+        labelLarge: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.bold, color: textPrimary, letterSpacing: 0.4),
       ),
       cardTheme: CardThemeData(
         color: cardBg,
@@ -59,7 +59,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: bgSecondary,
-        contentTextStyle: GoogleFonts.dmSans(fontSize: 13, fontWeight: FontWeight.w400, color: textPrimary),
+        contentTextStyle: GoogleFonts.ptSans(fontSize: 13, fontWeight: FontWeight.w400, color: textPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: const BorderSide(color: cardBorder),

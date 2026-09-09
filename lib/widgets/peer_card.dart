@@ -53,9 +53,9 @@ class PeerCard extends StatelessWidget {
                     Flexible(
                       child: Text(
                         peer.name,
-                        style: GoogleFonts.dmSans(
+                        style: GoogleFonts.ptSans(
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.bold,
                           color: AppTheme.textPrimary,
                         ),
                         maxLines: 1,
@@ -71,7 +71,7 @@ class PeerCard extends StatelessWidget {
                   children: [
                     Text(
                       peer.ip,
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                         color: AppTheme.textMuted,
@@ -80,7 +80,7 @@ class PeerCard extends StatelessWidget {
                     if (peer.port != 0 && peer.hasDirectIp) ...[
                       Text(
                         ':${peer.port}',
-                        style: GoogleFonts.dmSans(
+                        style: GoogleFonts.ptSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: AppTheme.textMuted,
@@ -92,9 +92,9 @@ class PeerCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       peer.deviceType.name.toUpperCase(),
-                      style: GoogleFonts.dmSans(
+                      style: GoogleFonts.ptSans(
                         fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
                         color: AppTheme.textSecondary,
                         letterSpacing: 0.3,
                       ),
@@ -116,9 +116,9 @@ class PeerCard extends StatelessWidget {
               peer.hasDirectIp
                   ? (stagedCount > 0 ? 'Send ($stagedCount)' : 'Select Files')
                   : (stagedCount > 0 ? 'Share ($stagedCount)' : 'Share via QR'),
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.ptSans(
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
                 letterSpacing: 0.2,
               ),
             ),
@@ -156,9 +156,9 @@ class PeerCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             medium.label,
-            style: GoogleFonts.dmSans(
+            style: GoogleFonts.ptSans(
               fontSize: 10,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.bold,
               color: AppTheme.textSecondary,
               letterSpacing: 0.3,
             ),
