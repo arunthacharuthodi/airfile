@@ -169,11 +169,11 @@ jobs:
           retention-days: 90
 
   # ===================================================================
-  # 4. PUBLISH GITHUB RELEASE (On Tag: v*)
+  # 4. PUBLISH GITHUB RELEASE (On Main Push, Tags, or Manual Trigger)
   # ===================================================================
   release:
     name: Create GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name != 'pull_request'
     needs: [ build-windows, build-macos, build-android ]
     runs-on: ubuntu-latest
 
@@ -214,6 +214,9 @@ jobs:
       - name: Publish All Assets to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || 'AirFile Latest Release' }}
+          prerelease: ${{ github.ref_type != 'tag' }}
           files: |
             release_assets/AirFile-Setup-x64.exe
             release_assets/AirFile.dmg
