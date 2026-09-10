@@ -649,25 +649,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Brand & Name
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardBg,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppTheme.cardBorderHover, width: 1),
+          // Brand & Name (Double tap logo to open Developer Support)
+          GestureDetector(
+            onDoubleTap: _showDevDebugModal,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardBg,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppTheme.cardBorderHover, width: 1),
+                  ),
+                  child: Image.asset(
+                    'assets/icon/app_icon.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.share_outlined, color: AppTheme.accentWhite, size: 15),
+                  ),
                 ),
-                child: Image.asset(
-                  'assets/icon/app_icon.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.share_outlined, color: AppTheme.accentWhite, size: 15),
-                ),
-              ),
-              const SizedBox(width: 10),
+                const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -716,6 +719,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             ],
           ),
+        ),
 
           // Actions & Badges
           Row(
@@ -785,39 +789,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ],
-              const SizedBox(width: 8),
-
-              // Wireless Debug Button
-              OutlinedButton.icon(
-                onPressed: _showDevDebugModal,
-                icon: Icon(
-                  Icons.bug_report_rounded,
-                  size: 14,
-                  color: widget.devDebugService.connectedDevices.isNotEmpty
-                      ? Colors.greenAccent
-                      : AppTheme.accentWhite,
-                ),
-                label: Text(
-                  isCompact ? 'Debug' : 'Wireless Debug',
-                  style: GoogleFonts.ptSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.2),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: widget.devDebugService.connectedDevices.isNotEmpty
-                      ? Colors.greenAccent
-                      : AppTheme.accentWhite,
-                  side: BorderSide(
-                    color: widget.devDebugService.connectedDevices.isNotEmpty
-                        ? Colors.green.withValues(alpha: 0.5)
-                        : AppTheme.cardBorderHover,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-
               // QR Code Button
               OutlinedButton.icon(
                 onPressed: _showQrModal,
