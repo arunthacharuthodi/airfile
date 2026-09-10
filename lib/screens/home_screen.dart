@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/file_payload.dart';
@@ -45,6 +46,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final TextEditingController _directIpController = TextEditingController();
   late final ClipboardSyncService _clipboardSyncService;
+  bool _isWindowDraggingOver = false;
 
   @override
   void initState() {
@@ -284,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ...widget.transferClient.outgoingTransfers.where((t) => t.status.isDone),
         ];
 
-        return Scaffold(
+        Widget body = Scaffold(
           body: SafeArea(
             child: Column(
               children: [
@@ -363,6 +365,76 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
         );
+
+        if (!Platform.isAndroid && !Platform.isIOS) {
+          body = DropTarget(
+            onDragEntered: (details) => setState(() => _isWindowDraggingOver = true),
+            onDragExited: (details) => setState(() => _isWindowDraggingOver = false),
+            onDragDone: (details) {
+              setState(() => _isWindowDraggingOver = false);
+              for (final file in details.files) {
+                widget.transferServer.stageFile(file.path);
+              }
+            },
+            child: Stack(
+              children: [
+                body,
+                if (_isWindowDraggingOver)
+                  IgnorePointer(
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.75),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                          decoration: BoxDecoration(
+                            color: AppTheme.bgSecondary,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.accentWhite, width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                blurRadius: 20,
+                                spreadRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.file_download_outlined,
+                                size: 42,
+                                color: AppTheme.accentWhite,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Drop files anywhere to stage',
+                                style: GoogleFonts.ptSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Files will be added to your staged files list',
+                                style: GoogleFonts.ptSans(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        return body;
       },
     );
   }
