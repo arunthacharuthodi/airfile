@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -91,6 +92,53 @@ class StorageService {
     } catch (e) {
       debugPrint('Error opening downloads folder: $e');
       return false;
+    }
+  }
+
+  Future<File> _getWatchedFoldersConfigFile() async {
+    Directory base;
+    try {
+      base = await getApplicationSupportDirectory();
+    } catch (_) {
+      base = await getApplicationDocumentsDirectory();
+    }
+    final configDir = Directory(p.join(base.path, 'AirFile'));
+    if (!await configDir.exists()) {
+      await configDir.create(recursive: true);
+    }
+    return File(p.join(configDir.path, 'airfile_watched_folders.json'));
+  }
+
+  Future<List<String>> getWatchedFolders() async {
+    try {
+      final file = await _getWatchedFoldersConfigFile();
+      if (!await file.exists()) {
+        return [];
+      }
+      final content = await file.readAsString();
+      final data = jsonDecode(content);
+      if (data is Map && data['watchedFolders'] is List) {
+        return (data['watchedFolders'] as List)
+            .map((e) => e.toString())
+            .where((path) => path.trim().isNotEmpty)
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('Error loading watched folders: $e');
+    }
+    return [];
+  }
+
+  Future<void> saveWatchedFolders(List<String> folders) async {
+    try {
+      final file = await _getWatchedFoldersConfigFile();
+      final data = {
+        'watchedFolders': folders,
+        'lastUpdated': DateTime.now().toIso8601String(),
+      };
+      await file.writeAsString(jsonEncode(data));
+    } catch (e) {
+      debugPrint('Error saving watched folders: $e');
     }
   }
 }

@@ -89,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _clipboardSyncService.checkLocalClipboard();
+      widget.transferServer.refreshWatchedFolders();
     }
   }
 
@@ -458,7 +459,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         // Drag & Drop Staging Area
         DragDropStagingZone(
           stagedFiles: stagedFiles,
+          watchedFolders: widget.transferServer.watchedFolders,
           onFileAdded: widget.transferServer.stageFile,
+          onFolderAdded: widget.transferServer.addWatchedFolder,
+          onFolderRemoved: widget.transferServer.removeWatchedFolder,
+          onRefreshFolders: widget.transferServer.refreshWatchedFolders,
           onFileRemoved: widget.transferServer.removeStagedFile,
           onClearAll: widget.transferServer.clearStagedFiles,
         ),

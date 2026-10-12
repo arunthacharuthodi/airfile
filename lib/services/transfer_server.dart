@@ -18,6 +18,8 @@ class StagedFile {
   final String name;
   final int size;
   final String mimeType;
+  final String? folderSource;
+  final String? folderPrefix;
 
   StagedFile({
     required this.id,
@@ -25,6 +27,8 @@ class StagedFile {
     required this.name,
     required this.size,
     required this.mimeType,
+    this.folderSource,
+    this.folderPrefix,
   });
 }
 
@@ -44,6 +48,9 @@ class TransferServer extends ChangeNotifier {
   final List<StagedFile> _stagedFiles = [];
   final List<FilePayload> _activeTransfers = [];
   final List<FilePayload> _transferHistory = [];
+  final List<String> _watchedFolders = [];
+  final Map<String, StreamSubscription<FileSystemEvent>> _folderWatchers = {};
+  final Map<String, Timer> _syncDebounceTimers = {};
 
   OnIncomingTransferRequest? onTransferRequested;
   OnTransferProgress? onTransferProgress;
@@ -54,6 +61,7 @@ class TransferServer extends ChangeNotifier {
   List<StagedFile> get stagedFiles => List.unmodifiable(_stagedFiles);
   List<FilePayload> get activeTransfers => List.unmodifiable(_activeTransfers);
   List<FilePayload> get transferHistory => List.unmodifiable(_transferHistory);
+  List<String> get watchedFolders => List.unmodifiable(_watchedFolders);
 
   TransferServer({
     required this.storageService,
@@ -97,6 +105,15 @@ class TransferServer extends ChangeNotifier {
   }
 
   Future<void> stop() async {
+    for (final sub in _folderWatchers.values) {
+      await sub.cancel();
+    }
+    _folderWatchers.clear();
+    for (final timer in _syncDebounceTimers.values) {
+      timer.cancel();
+    }
+    _syncDebounceTimers.clear();
+
     await _serverIpv4?.close(force: true);
     await _serverIpv6?.close(force: true);
     _serverIpv4 = null;
@@ -105,11 +122,174 @@ class TransferServer extends ChangeNotifier {
     notifyListeners();
   }
 
-  void stageFile(String filePath) {
+  static String generateFolderPrefix(String folderPath) {
+    final folderName = p.basename(folderPath);
+    final genericNames = {
+      'flutter-apk',
+      'flutter-apks',
+      'apk',
+      'apks',
+      'outputs',
+      'build',
+      'release',
+      'debug',
+      'dist',
+      'bin',
+      'app',
+    };
+
+    if (genericNames.contains(folderName.toLowerCase())) {
+      Directory current = Directory(folderPath);
+      String? projectName;
+      for (int i = 0; i < 5; i++) {
+        final parent = current.parent;
+        if (parent.path == current.path) break;
+        current = parent;
+        final parentName = p.basename(current.path);
+        if (!genericNames.contains(parentName.toLowerCase()) &&
+            parentName.isNotEmpty &&
+            parentName != '/' &&
+            parentName != '\\') {
+          projectName = parentName;
+          break;
+        }
+      }
+      if (projectName != null && projectName.isNotEmpty) {
+        return '$projectName • $folderName';
+      }
+    }
+    return folderName;
+  }
+
+  Future<void> initWatchedFolders() async {
+    try {
+      final saved = await storageService.getWatchedFolders();
+      _watchedFolders.clear();
+      for (final folder in saved) {
+        if (await Directory(folder).exists() && !_watchedFolders.contains(folder)) {
+          _watchedFolders.add(folder);
+          _startWatchingFolder(folder);
+        }
+      }
+      await refreshWatchedFolders();
+    } catch (e) {
+      debugPrint('Error initializing watched folders: $e');
+    }
+  }
+
+  Future<void> addWatchedFolder(String folderPath) async {
+    final dir = Directory(folderPath);
+    if (!await dir.exists()) return;
+    if (!_watchedFolders.contains(folderPath)) {
+      _watchedFolders.add(folderPath);
+      await storageService.saveWatchedFolders(_watchedFolders);
+      _startWatchingFolder(folderPath);
+    }
+    await _syncFolderFiles(folderPath);
+    notifyListeners();
+  }
+
+  Future<void> removeWatchedFolder(String folderPath) async {
+    _watchedFolders.remove(folderPath);
+    _stopWatchingFolder(folderPath);
+    await storageService.saveWatchedFolders(_watchedFolders);
+    _stagedFiles.removeWhere((f) => f.folderSource == folderPath);
+    notifyListeners();
+  }
+
+  Future<void> refreshWatchedFolders() async {
+    for (final folder in List<String>.from(_watchedFolders)) {
+      await _syncFolderFiles(folder);
+    }
+    notifyListeners();
+  }
+
+  void _startWatchingFolder(String folderPath) {
+    _stopWatchingFolder(folderPath);
+    try {
+      final dir = Directory(folderPath);
+      _folderWatchers[folderPath] = dir.watch().listen((event) {
+        _debounceFolderSync(folderPath);
+      }, onError: (err) {
+        debugPrint('Watcher error for $folderPath: $err');
+      });
+    } catch (e) {
+      debugPrint('Error starting watcher on $folderPath: $e');
+    }
+  }
+
+  void _stopWatchingFolder(String folderPath) {
+    _folderWatchers[folderPath]?.cancel();
+    _folderWatchers.remove(folderPath);
+    _syncDebounceTimers[folderPath]?.cancel();
+    _syncDebounceTimers.remove(folderPath);
+  }
+
+  void _debounceFolderSync(String folderPath) {
+    _syncDebounceTimers[folderPath]?.cancel();
+    _syncDebounceTimers[folderPath] = Timer(const Duration(milliseconds: 700), () {
+      _syncFolderFiles(folderPath);
+    });
+  }
+
+  Future<void> _syncFolderFiles(String folderPath) async {
+    final dir = Directory(folderPath);
+    if (!await dir.exists()) return;
+
+    final prefix = generateFolderPrefix(folderPath);
+
+    // Keep individual files and other folders intact, only refresh this folder's items
+    _stagedFiles.removeWhere((f) => f.folderSource == folderPath);
+
+    try {
+      final List<File> filesToStage = [];
+      await for (final entity in dir.list(recursive: true, followLinks: false)) {
+        if (entity is File) {
+          final base = p.basename(entity.path);
+          if (base.startsWith('.')) continue;
+
+          final ext = p.extension(entity.path).toLowerCase();
+          if (ext == '.tmp' || ext == '.bak' || ext == '.lock' || ext == '.d') continue;
+
+          final rel = p.relative(entity.path, from: folderPath);
+          final parts = p.split(rel);
+          if (parts.length > 3) continue;
+
+          filesToStage.add(entity);
+        }
+      }
+
+      filesToStage.sort((a, b) => p.basename(a.path).compareTo(p.basename(b.path)));
+
+      for (final file in filesToStage) {
+        final stat = await file.stat();
+        final fileName = p.basename(file.path);
+        final mime = lookupMimeType(file.path) ?? 'application/octet-stream';
+        final id = 'folder_stage_${folderPath.hashCode}_${file.path.hashCode}';
+
+        _stagedFiles.add(
+          StagedFile(
+            id: id,
+            path: file.path,
+            name: '[$prefix] $fileName',
+            size: stat.size,
+            mimeType: mime,
+            folderSource: folderPath,
+            folderPrefix: prefix,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error scanning folder $folderPath: $e');
+    }
+    notifyListeners();
+  }
+
+  void stageFile(String filePath, {String? customName, String? folderSource, String? folderPrefix}) {
     final file = File(filePath);
     if (!file.existsSync()) return;
     final stat = file.statSync();
-    final fileName = p.basename(filePath);
+    final fileName = customName ?? p.basename(filePath);
     final mime = lookupMimeType(filePath) ?? 'application/octet-stream';
     final id = 'stage_${DateTime.now().millisecondsSinceEpoch}_${_stagedFiles.length}';
 
@@ -122,6 +302,8 @@ class TransferServer extends ChangeNotifier {
         name: fileName,
         size: stat.size,
         mimeType: mime,
+        folderSource: folderSource,
+        folderPrefix: folderPrefix,
       ),
     );
     notifyListeners();
@@ -132,8 +314,12 @@ class TransferServer extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearStagedFiles() {
-    _stagedFiles.clear();
+  void clearStagedFiles({bool keepWatchedFolders = true}) {
+    if (keepWatchedFolders && _stagedFiles.any((f) => f.folderSource != null)) {
+      _stagedFiles.removeWhere((f) => f.folderSource == null);
+    } else {
+      _stagedFiles.clear();
+    }
     notifyListeners();
   }
 
@@ -223,8 +409,11 @@ class TransferServer extends ChangeNotifier {
     final list = _stagedFiles.map((f) => {
       'id': f.id,
       'name': f.name,
+      'path': f.path,
       'size': f.size,
       'mimeType': f.mimeType,
+      'folderSource': f.folderSource,
+      'folderPrefix': f.folderPrefix,
       'downloadUrl': '/api/transfer/download/${f.id}',
     }).toList();
 
@@ -408,8 +597,11 @@ class TransferServer extends ChangeNotifier {
 
     request.response.statusCode = HttpStatus.ok;
     request.response.headers.contentType = ContentType.parse(staged.mimeType);
-    request.response.headers.add('Content-Length', staged.size);
-    request.response.headers.add('Content-Disposition', 'attachment; filename="${Uri.encodeComponent(staged.name)}"');
+    final safeFileName = staged.name.replaceAll('"', '');
+    request.response.headers.add(
+      'Content-Disposition',
+      'attachment; filename="$safeFileName"; filename*=UTF-8\'\'${Uri.encodeComponent(safeFileName)}',
+    );
 
     final payload = FilePayload(
       id: 'dl_${DateTime.now().millisecondsSinceEpoch}',
@@ -588,7 +780,7 @@ class TransferServer extends ChangeNotifier {
 
   void _handleWebPortal(HttpRequest request) {
     final stagedItemsHtml = _stagedFiles.isEmpty
-        ? '<div class="empty-state">No files currently staged on Mac. Drop files into the Mac app to download them here.</div>'
+        ? '<div class="empty-state">No files currently staged on Mac. Drop files into the Mac app or add project folders to download them here.</div>'
         : _stagedFiles.map((f) {
             final sizeKb = (f.size / 1024).toStringAsFixed(1);
             final sizeStr = f.size > 1024 * 1024 ? '${(f.size / (1024 * 1024)).toStringAsFixed(1)} MB' : '$sizeKb KB';
@@ -596,6 +788,7 @@ class TransferServer extends ChangeNotifier {
               <div class="file-card">
                 <div class="file-info">
                   <div class="file-name">${_escapeHtml(f.name)}</div>
+                  <div class="file-path" title="${_escapeHtml(f.path)}">${_escapeHtml(f.path)}</div>
                   <div class="file-meta">$sizeStr • ${_escapeHtml(f.mimeType)}</div>
                 </div>
                 <a href="/api/transfer/download/${f.id}" download="${_escapeHtml(f.name)}" class="btn-download">Download</a>
@@ -771,6 +964,17 @@ class TransferServer extends ChangeNotifier {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .file-path {
+      font-size: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+      margin-bottom: 2px;
+      opacity: 0.85;
     }
     .file-meta {
       font-size: 11px;

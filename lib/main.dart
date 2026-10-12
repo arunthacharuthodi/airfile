@@ -39,6 +39,7 @@ void main() async {
   );
   try {
     await transferServer.start();
+    await transferServer.initWatchedFolders();
   } catch (e) {
     debugPrint('TransferServer start error: $e');
   }
